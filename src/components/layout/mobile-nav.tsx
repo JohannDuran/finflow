@@ -39,7 +39,7 @@ export function MobileNav() {
                 {/* FAB Button */}
                 <button
                   onClick={() => setActiveModal("transaction-form")}
-                  className="relative -top-4 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 flex items-center justify-center active:scale-95 transition-transform mx-2 cursor-pointer"
+                  className="relative -top-4 w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6aab8e] to-[#6fa8c9] text-white shadow-lg shadow-[#6aab8e]/30 flex items-center justify-center active:scale-95 transition-transform mx-2 cursor-pointer"
                   aria-label="Nueva transacción"
                 >
                   <Plus className="w-7 h-7" />

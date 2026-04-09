@@ -256,8 +256,8 @@ export default function ReportsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-muted-foreground">Ingresos</p>
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-primary" />
               </div>
             </div>
             <CurrencyDisplay amount={summary.income} type="income" size="md" className="font-bold" />
@@ -284,10 +284,10 @@ export default function ReportsPage() {
               <p className="text-xs text-muted-foreground">Balance neto</p>
               <div className={cn(
                 "w-8 h-8 rounded-lg flex items-center justify-center",
-                summary.net >= 0 ? "bg-emerald-500/10" : "bg-rose-500/10"
+                summary.net >= 0 ? "bg-primary/10" : "bg-rose-500/10"
               )}>
                 {summary.net >= 0
-                  ? <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                  ? <ArrowUpRight className="w-4 h-4 text-primary" />
                   : <ArrowDownRight className="w-4 h-4 text-rose-500" />
                 }
               </div>
@@ -334,8 +334,8 @@ export default function ReportsPage() {
                 <AreaChart data={dailyCashFlow} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#6aab8e" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6aab8e" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.3} />
@@ -346,7 +346,7 @@ export default function ReportsPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="income" name="Ingresos" stroke="#22C55E" fill="url(#incomeGrad)" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="income" name="Ingresos" stroke="#6aab8e" fill="url(#incomeGrad)" strokeWidth={2} dot={false} />
                   <Area type="monotone" dataKey="expense" name="Gastos" stroke="#F43F5E" fill="url(#expenseGrad)" strokeWidth={2} dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -444,7 +444,7 @@ export default function ReportsPage() {
                     iconType="circle"
                     iconSize={8}
                   />
-                  <Bar dataKey="income" name="Ingresos" fill="#22C55E" radius={[4, 4, 0, 0]} barSize={16} />
+                  <Bar dataKey="income" name="Ingresos" fill="#6aab8e" radius={[4, 4, 0, 0]} barSize={16} />
                   <Bar dataKey="expense" name="Gastos" fill="#F43F5E" radius={[4, 4, 0, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
@@ -549,7 +549,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-display flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              <TrendingUp className="w-4 h-4 text-primary" />
               Fuentes de ingreso
             </CardTitle>
           </CardHeader>
@@ -570,7 +570,7 @@ export default function ReportsPage() {
                         <p className="text-[10px] text-muted-foreground">{cat.percentage}% del total</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-emerald-500">
+                    <p className="text-sm font-semibold text-primary">
                       +{formatCurrency(cat.value)}
                     </p>
                   </div>

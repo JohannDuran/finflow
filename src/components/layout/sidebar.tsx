@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/shared/logo";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -16,13 +17,10 @@ import {
   BarChart3,
   Target,
   CreditCard,
-  Users,
-  TrendingUp,
   Settings,
   LogOut,
   PanelLeftClose,
   PanelLeft,
-  Waves,
 } from "lucide-react";
 
 const navItems = [
@@ -49,15 +47,8 @@ export function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className={cn("flex items-center h-16 px-4", sidebarCollapsed ? "justify-center" : "gap-3")}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-            <Waves className="w-5 h-5 text-white" />
-          </div>
-          {!sidebarCollapsed && (
-            <span className="text-xl font-bold font-display tracking-tight bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
-              FinFlow
-            </span>
-          )}
+        <div className={cn("flex items-center h-16 px-4", sidebarCollapsed ? "justify-center" : "")}>
+          <Logo size={sidebarCollapsed ? "sm" : "md"} showText={!sidebarCollapsed} />
         </div>
 
         <Separator className="mx-4 w-auto" />

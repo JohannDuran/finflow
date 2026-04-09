@@ -79,7 +79,7 @@ export function getBudgetBarColor(percentage: number): string {
   if (percentage > 100) return "bg-purple-500";
   if (percentage > 90) return "bg-red-500";
   if (percentage > 70) return "bg-amber-500";
-  return "bg-emerald-500";
+  return "bg-primary";
 }
 
 export const currencyFlags: Record<Currency, string> = {

@@ -26,16 +26,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html
-      lang="es"
-      className={`${plusJakarta.variable} ${inter.variable}`}
-      suppressHydrationWarning
-    >
-      <body className="min-h-screen bg-background text-foreground antialiased">
+    <html lang="es" className="plus_jakar..." suppressHydrationWarning>
+      <body 
+        className="min-h-screen bg-background text-foreground antialiased"
+        suppressHydrationWarning  // ← Add this line
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

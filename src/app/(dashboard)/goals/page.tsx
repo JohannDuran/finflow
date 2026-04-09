@@ -30,7 +30,7 @@ const goalTypeLabels: Record<string, string> = {
 };
 
 const goalTypeColors: Record<string, string> = {
-  savings: "bg-emerald-500/10 text-emerald-500",
+  savings: "bg-primary/10 text-primary",
   debt_payoff: "bg-rose-500/10 text-rose-500",
   emergency: "bg-blue-500/10 text-blue-500",
   custom: "bg-violet-500/10 text-violet-500",
@@ -65,7 +65,7 @@ function GoalCard({ goal }: { goal: Goal }) {
     >
       {goal.isCompleted && (
         <div className="absolute top-3 right-3">
-          <Badge className="bg-emerald-500 text-white gap-1 text-[10px]">
+          <Badge className="bg-primary text-primary-foreground gap-1 text-[10px]">
             <CheckCircle2 className="w-3 h-3" />
             Completada
           </Badge>
@@ -112,12 +112,12 @@ function GoalCard({ goal }: { goal: Goal }) {
             className="h-3"
             indicatorClassName={
               goal.isCompleted
-                ? "bg-emerald-500"
+                ? "bg-primary"
                 : percentage >= 75
-                ? "bg-emerald-500"
+                ? "bg-primary"
                 : percentage >= 50
                 ? "bg-amber-500"
-                : "bg-blue-500"
+                : "bg-[#6fa8c9]"
             }
           />
           <div className="flex items-center justify-between mt-1.5">
@@ -125,10 +125,10 @@ function GoalCard({ goal }: { goal: Goal }) {
               className={cn(
                 "text-xs font-medium",
                 percentage >= 75
-                  ? "text-emerald-500"
+                  ? "text-primary"
                   : percentage >= 50
                   ? "text-amber-500"
-                  : "text-blue-500"
+                  : "text-[#6fa8c9]"
               )}
             >
               {percentage}%
@@ -233,8 +233,8 @@ export default function GoalsPage() {
                     className={cn(
                       "text-2xl font-bold",
                       summary.overallPercent >= 50
-                        ? "text-emerald-500"
-                        : "text-blue-500"
+                        ? "text-primary"
+                        : "text-[#6fa8c9]"
                     )}
                   >
                     {summary.overallPercent}%

@@ -76,7 +76,7 @@ export function WalletCard({ wallet, onEdit, onClick }: WalletCardProps) {
               value={creditUsed}
               className="h-2"
               indicatorClassName={
-                creditUsed > 80 ? "bg-red-500" : creditUsed > 50 ? "bg-amber-500" : "bg-emerald-500"
+                creditUsed > 80 ? "bg-red-500" : creditUsed > 50 ? "bg-amber-500" : "bg-primary"
               }
             />
           </div>

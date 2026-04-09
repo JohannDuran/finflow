@@ -52,66 +52,66 @@
 
 /* ── Light Mode ── */
 :root {
-  --background: #f8fafc;
+  --background: #f8fafb;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
-  --primary: #10b981;
+  --primary: #6aab8e;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
+  --secondary: #f0f5f3;
   --secondary-foreground: #334155;
-  --muted: #f1f5f9;
+  --muted: #f0f5f3;
   --muted-foreground: #64748b;
-  --accent: #f1f5f9;
+  --accent: #eef4f7;
   --accent-foreground: #0f172a;
   --destructive: #f43f5e;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #10b981;
+  --border: #dce8e3;
+  --input: #dce8e3;
+  --ring: #6aab8e;
   --sidebar: #ffffff;
   --sidebar-foreground: #334155;
-  --sidebar-accent: #f0fdf4;
-  --sidebar-accent-foreground: #065f46;
-  --sidebar-border: #e2e8f0;
+  --sidebar-accent: #edf5f1;
+  --sidebar-accent-foreground: #3d7a5c;
+  --sidebar-border: #dce8e3;
 
-  --income: #22c55e;
+  --income: #6aab8e;
   --expense: #f43f5e;
-  --transfer: #3b82f6;
+  --transfer: #6fa8c9;
 }
 
 /* ── Dark Mode ── */
 .dark {
-  --background: #020617;
+  --background: #020a12;
   --foreground: #f1f5f9;
-  --card: #0f172a;
+  --card: #0c1720;
   --card-foreground: #f1f5f9;
-  --popover: #0f172a;
+  --popover: #0c1720;
   --popover-foreground: #f1f5f9;
-  --primary: #10b981;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
+  --primary: #8bc5a3;
+  --primary-foreground: #0c1720;
+  --secondary: #152230;
   --secondary-foreground: #cbd5e1;
-  --muted: #1e293b;
+  --muted: #152230;
   --muted-foreground: #94a3b8;
-  --accent: #1e293b;
+  --accent: #152230;
   --accent-foreground: #f1f5f9;
   --destructive: #f43f5e;
   --destructive-foreground: #ffffff;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #10b981;
-  --sidebar: #0f172a;
+  --border: #1a2d3d;
+  --input: #1a2d3d;
+  --ring: #8bc5a3;
+  --sidebar: #0c1720;
   --sidebar-foreground: #94a3b8;
-  --sidebar-accent: #064e3b;
-  --sidebar-accent-foreground: #a7f3d0;
-  --sidebar-border: #1e293b;
+  --sidebar-accent: #1a3a2e;
+  --sidebar-accent-foreground: #a8dbbe;
+  --sidebar-border: #1a2d3d;
 
-  --income: #4ade80;
+  --income: #8bc5a3;
   --expense: #fb7185;
-  --transfer: #60a5fa;
+  --transfer: #8bbde0;
 }
 
 /* ── Base Styles ── */

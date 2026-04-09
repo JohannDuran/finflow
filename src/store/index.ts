@@ -30,7 +30,7 @@ interface FinFlowState {
   // UI State
   sidebarCollapsed: boolean;
   activeModal: string | null;
-  editingItem: Transaction | Wallet | Budget | null;
+  editingItem: Transaction | Wallet | Budget | Goal | Subscription | null;
 
   // Actions — User
   updateUser: (data: Partial<User>) => void;

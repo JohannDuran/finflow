@@ -64,7 +64,7 @@ export default function WalletsPage() {
       </div>
 
       {/* Total Balance Card */}
-      <Card className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-500/20">
+      <Card className="bg-gradient-to-br from-[#8bc5a3]/10 via-[#6fa8c9]/5 to-transparent border-[#8bc5a3]/20">
         <CardContent className="p-6 text-center">
           <p className="text-sm text-muted-foreground mb-2">Balance total consolidado</p>
           <CurrencyDisplay amount={totalBalance} size="xl" />

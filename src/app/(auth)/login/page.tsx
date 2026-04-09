@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Waves, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { Logo } from "@/components/shared/logo";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -26,19 +27,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#8bc5a3]/5 via-transparent to-[#6fa8c9]/5" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8bc5a3]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#6fa8c9]/10 rounded-full blur-3xl" />
 
       <Card className="w-full max-w-md relative z-10 shadow-2xl border-border/50">
         <CardHeader className="text-center pb-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-              <Waves className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold font-display bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
-              FinFlow
-            </span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo size="lg" />
           </div>
           <h1 className="text-xl font-bold font-display">Inicia sesión</h1>
           <p className="text-sm text-muted-foreground">Ingresa tus credenciales</p>

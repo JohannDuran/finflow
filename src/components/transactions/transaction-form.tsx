@@ -69,10 +69,15 @@ export function TransactionFormModal() {
   useEffect(() => {
     if (editTx) {
       setType(editTx.type);
-      setAmount(editTx.amount.toString());
-      setWalletId(editTx.walletId);
-      setCategoryId(editTx.categoryId);
-      setDescription(editTx.description);
+      // FIX: Safely access amount and provide an empty string fallback
+      setAmount(editTx.amount?.toString() || ""); 
+      
+      // I also added fallbacks (|| "") to these string setters 
+      // to prevent uncontrolled input warnings in React just in case they are undefined.
+      setWalletId(editTx.walletId || "");
+      setCategoryId(editTx.categoryId || "");
+      setDescription(editTx.description || ""); 
+      
       setNote(editTx.note || "");
       setDate(editTx.date);
       setIsRecurring(editTx.isRecurring);

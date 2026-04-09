@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/shared/logo";
 import {
-  Waves,
   Wallet,
   PieChart,
   Globe,
@@ -87,14 +87,7 @@ export default function LandingPage() {
         )}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-              <Waves className="w-4.5 h-4.5 text-white" />
-            </div>
-            <span className="text-lg font-bold font-display bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
-              FinFlow
-            </span>
-          </div>
+          <Logo size="sm" />
 
           <div className="hidden md:flex items-center gap-8 text-sm">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Funciones</a>
@@ -123,9 +116,9 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5" />
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#8bc5a3]/5 via-transparent to-[#6fa8c9]/5" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#8bc5a3]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#6fa8c9]/10 rounded-full blur-3xl" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <Badge className="mb-6 px-4 py-1.5 text-sm font-medium bg-primary/10 text-primary border-primary/20">
@@ -134,7 +127,7 @@ export default function LandingPage() {
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display tracking-tight leading-tight mb-6">
             Todas tus finanzas.{" "}
-            <span className="bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#6aab8e] via-[#7ab8a0] to-[#6fa8c9] bg-clip-text text-transparent">
               Una sola app.
             </span>
           </h1>
@@ -146,7 +139,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register">
-              <Button size="xl" className="gap-2 shadow-lg shadow-emerald-500/25 w-full sm:w-auto">
+              <Button size="xl" className="gap-2 shadow-lg shadow-[#6aab8e]/25 w-full sm:w-auto">
                 Empieza gratis <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -334,7 +327,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="relative bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent rounded-3xl p-12 border border-primary/10">
+          <div className="relative bg-gradient-to-br from-[#8bc5a3]/10 via-[#6fa8c9]/5 to-transparent rounded-3xl p-12 border border-primary/10">
             <h2 className="text-3xl font-bold font-display mb-4">
               ¿Listo para tomar el control?
             </h2>
@@ -342,7 +335,7 @@ export default function LandingPage() {
               Únete a miles de personas en LATAM que ya manejan sus finanzas como profesionales.
             </p>
             <Link href="/register">
-              <Button size="xl" className="shadow-lg shadow-emerald-500/25 gap-2">
+              <Button size="xl" className="shadow-lg shadow-[#6aab8e]/25 gap-2">
                 Crear mi cuenta gratis <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -355,11 +348,8 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                  <Waves className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="font-bold font-display text-sm">FinFlow</span>
+              <div className="mb-4">
+                <Logo size="sm" />
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Todas tus finanzas. Una sola app. Cero excusas.
