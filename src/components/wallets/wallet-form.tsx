@@ -1,0 +1,246 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useFinFlowStore } from "@/store";
+import { cn } from "@/lib/utils";
+import type { WalletType, Wallet } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { IconRenderer } from "@/components/shared/icon-renderer";
+import { currencies } from "@/lib/constants";
+import { toast } from "sonner";
+import type { Currency } from "@/types";
+
+const walletTypes: { value: WalletType; label: string; icon: string }[] = [
+  { value: "cash", label: "Efectivo", icon: "Banknote" },
+  { value: "bank", label: "Banco", icon: "Building2" },
+  { value: "credit", label: "Crédito", icon: "CreditCard" },
+  { value: "ewallet", label: "E-wallet", icon: "Smartphone" },
+  { value: "crypto", label: "Crypto", icon: "Bitcoin" },
+];
+
+const walletColors = [
+  "#22C55E", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444",
+  "#EC4899", "#06B6D4", "#6366F1", "#F97316", "#14B8A6",
+];
+
+export function WalletFormModal() {
+  const { activeModal, setActiveModal, editingItem, setEditingItem, addWallet, updateWallet } = useFinFlowStore();
+
+  const isOpen = activeModal === "wallet-form";
+  const editWallet = editingItem as Wallet | null;
+  const isEditing = !!editWallet && "type" in editWallet && "currency" in editWallet && !("categoryId" in editWallet);
+
+  const [name, setName] = useState("");
+  const [type, setType] = useState<WalletType>("bank");
+  const [currency, setCurrency] = useState<Currency>("MXN");
+  const [balance, setBalance] = useState("");
+  const [creditLimit, setCreditLimit] = useState("");
+  const [icon, setIcon] = useState("Building2");
+  const [color, setColor] = useState("#3B82F6");
+
+  useEffect(() => {
+    if (isEditing && editWallet) {
+      setName(editWallet.name);
+      setType(editWallet.type);
+      setCurrency(editWallet.currency);
+      setBalance(editWallet.balance.toString());
+      setCreditLimit(editWallet.creditLimit?.toString() || "");
+      setIcon(editWallet.icon);
+      setColor(editWallet.color);
+    } else {
+      resetForm();
+    }
+  }, [editWallet, isEditing]);
+
+  function resetForm() {
+    setName("");
+    setType("bank");
+    setCurrency("MXN");
+    setBalance("");
+    setCreditLimit("");
+    setIcon("Building2");
+    setColor("#3B82F6");
+  }
+
+  function handleClose() {
+    setActiveModal(null);
+    setEditingItem(null);
+    resetForm();
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Ingresa un nombre");
+      return;
+    }
+
+    const walletData = {
+      userId: "u1",
+      name: name.trim(),
+      type,
+      currency,
+      balance: parseFloat(balance) || 0,
+      creditLimit: type === "credit" ? parseFloat(creditLimit) || undefined : undefined,
+      icon,
+      color,
+      isArchived: false,
+      sortOrder: 0,
+    };
+
+    if (isEditing && editWallet) {
+      updateWallet(editWallet.id, walletData);
+      toast.success("Wallet actualizado");
+    } else {
+      addWallet(walletData);
+      toast.success("Wallet creado");
+    }
+
+    handleClose();
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Editar wallet" : "Nuevo wallet"}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? "Modifica los datos de este wallet" : "Agrega una nueva cuenta o billetera"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
+          <div>
+            <Label htmlFor="wallet-name">Nombre</Label>
+            <Input
+              id="wallet-name"
+              placeholder="Ej: BBVA Débito"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <Label>Tipo</Label>
+            <div className="grid grid-cols-5 gap-2 mt-2">
+              {walletTypes.map((wt) => (
+                <button
+                  key={wt.value}
+                  type="button"
+                  onClick={() => {
+                    setType(wt.value);
+                    setIcon(wt.icon);
+                  }}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer text-center",
+                    type === wt.value
+                      ? "border-primary bg-primary/10"
+                      : "border-transparent bg-muted hover:border-border"
+                  )}
+                >
+                  <IconRenderer name={wt.icon} size={20} />
+                  <span className="text-[10px] font-medium">{wt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Currency */}
+          <div>
+            <Label>Moneda</Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.flag} {c.code} — {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Balance */}
+          <div>
+            <Label htmlFor="wallet-balance">Balance {isEditing ? "actual" : "inicial"}</Label>
+            <Input
+              id="wallet-balance"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={balance}
+              onChange={(e) => setBalance(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          {/* Credit Limit */}
+          {type === "credit" && (
+            <div>
+              <Label htmlFor="credit-limit">Límite de crédito</Label>
+              <Input
+                id="credit-limit"
+                type="number"
+                step="0.01"
+                placeholder="15000.00"
+                value={creditLimit}
+                onChange={(e) => setCreditLimit(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
+
+          {/* Color */}
+          <div>
+            <Label>Color</Label>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {walletColors.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={cn(
+                    "w-8 h-8 rounded-full transition-all cursor-pointer border-2",
+                    color === c ? "border-foreground scale-110" : "border-transparent hover:scale-105"
+                  )}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+              Cancelar
+            </Button>
+            <Button type="submit" className="flex-1">
+              {isEditing ? "Guardar" : "Crear wallet"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
