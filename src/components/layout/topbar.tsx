@@ -1,9 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Bell } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { Bell, CheckCircle2 } from "lucide-react";
 import { useFinFlowStore } from "@/store";
 
 const pageTitles: Record<string, string> = {
@@ -16,7 +17,6 @@ const pageTitles: Record<string, string> = {
 
 export function Topbar() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
   const { user } = useFinFlowStore();
 
   const title = pageTitles[pathname] || "FinFlow";
@@ -33,26 +33,39 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-muted-foreground"
-          aria-label="Notificaciones"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative text-muted-foreground"
+              aria-label="Notificaciones"
+            >
+              <Bell className="w-5 h-5" />
+              {/* Demo pending notification dot */}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary animate-pulse-soft" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+              <h4 className="font-semibold text-sm">Notificaciones</h4>
+              <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">1 Nueva</span>
+            </div>
+            <div className="p-4 flex flex-col items-center justify-center text-center gap-3 py-10">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">¡Estás al día!</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                  Por ahora no hay notificaciones, te avisaremos si ocurre algo nuevo.
+                </p>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="text-muted-foreground"
-          aria-label="Cambiar tema"
-        >
-          <Sun className="w-5 h-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute w-5 h-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        </Button>
+        <ThemeToggle />
       </div>
     </header>
   );

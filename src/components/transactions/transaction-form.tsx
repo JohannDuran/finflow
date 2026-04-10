@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useFinFlowStore } from "@/store";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
+import { createTransactionAction, updateTransactionAction } from "@/app/actions/transaction.actions";
 import type { TransactionType, Transaction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,10 +153,19 @@ export function TransactionFormModal() {
 
     if (isEditing && editTx) {
       updateTransaction(editTx.id, txData);
-      toast.success("Transacción actualizada");
+      toast.success("Transacción actualizada localmente");
+      updateTransactionAction(editTx.id, txData).catch(err => {
+        console.error(err);
+        toast.error("Error al actualizar en la nube");
+      });
     } else {
-      addTransaction(txData);
-      toast.success("Transacción creada");
+      const generatedId = generateId();
+      addTransaction({ ...txData, id: generatedId });
+      toast.success("Transacción agregada localmente");
+      createTransactionAction({ ...txData, id: generatedId }).catch(err => {
+        console.error(err);
+        toast.error("Error al guardar en la nube");
+      });
     }
 
     handleClose();

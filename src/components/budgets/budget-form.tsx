@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useFinFlowStore } from "@/store";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import type { BudgetPeriod, Budget } from "@/types";
+import { createBudgetAction, updateBudgetAction } from "@/app/actions/budget.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,7 +77,7 @@ export function BudgetFormModal() {
     resetForm();
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     const numAmount = parseFloat(amount);
@@ -90,7 +91,10 @@ export function BudgetFormModal() {
     }
 
     const cat = categories.find((c) => c.id === categoryId);
+    const optimisticId = isEditing && editBudget ? editBudget.id : generateId();
+
     const budgetData = {
+      id: optimisticId,
       userId: "u1",
       name: name || cat?.name || "Presupuesto",
       amount: numAmount,
@@ -104,10 +108,20 @@ export function BudgetFormModal() {
 
     if (isEditing && editBudget) {
       updateBudget(editBudget.id, budgetData);
-      toast.success("Presupuesto actualizado");
+      const res = await updateBudgetAction("u1", editBudget.id, budgetData);
+      if (res.success) {
+        toast.success("Presupuesto actualizado");
+      } else {
+        toast.error("Falló la actualización: " + res.error);
+      }
     } else {
       addBudget(budgetData);
-      toast.success("Presupuesto creado");
+      const res = await createBudgetAction(budgetData);
+      if (res.success) {
+        toast.success("Presupuesto creado");
+      } else {
+        toast.error("Falló la creación: " + res.error);
+      }
     }
 
     handleClose();

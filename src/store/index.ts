@@ -36,17 +36,17 @@ interface FinFlowState {
   updateUser: (data: Partial<User>) => void;
 
   // Actions — Transactions
-  addTransaction: (tx: Omit<Transaction, "id" | "createdAt" | "updatedAt">) => void;
+  addTransaction: (tx: Omit<Transaction, "id" | "createdAt" | "updatedAt"> & { id?: string }) => void;
   updateTransaction: (id: string, data: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
 
   // Actions — Wallets
-  addWallet: (wallet: Omit<Wallet, "id" | "createdAt">) => void;
+  addWallet: (wallet: Omit<Wallet, "id" | "createdAt"> & { id?: string }) => void;
   updateWallet: (id: string, data: Partial<Wallet>) => void;
   deleteWallet: (id: string) => void;
 
   // Actions — Budgets
-  addBudget: (budget: Omit<Budget, "id" | "createdAt" | "spent">) => void;
+  addBudget: (budget: Omit<Budget, "id" | "createdAt" | "spent"> & { id?: string }) => void;
   updateBudget: (id: string, data: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
 
@@ -60,12 +60,12 @@ interface FinFlowState {
   deleteTag: (id: string) => void;
 
   // Actions — Goals
-  addGoal: (goal: Omit<Goal, "id" | "createdAt">) => void;
+  addGoal: (goal: Omit<Goal, "id" | "createdAt"> & { id?: string }) => void;
   updateGoal: (id: string, data: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
 
   // Actions — Subscriptions
-  addSubscription: (sub: Omit<Subscription, "id" | "createdAt">) => void;
+  addSubscription: (sub: Omit<Subscription, "id" | "createdAt"> & { id?: string }) => void;
   updateSubscription: (id: string, data: Partial<Subscription>) => void;
   deleteSubscription: (id: string) => void;
 
@@ -132,7 +132,7 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
     set((state) => {
       const newTx: Transaction = {
         ...txData,
-        id: generateId(),
+        id: txData.id || generateId(),
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -254,7 +254,7 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
         ...state.wallets,
         {
           ...walletData,
-          id: generateId(),
+          id: walletData.id || generateId(),
           createdAt: new Date(),
         },
       ],
@@ -278,7 +278,7 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
     set((state) => {
       const newBudget: Budget = {
         ...budgetData,
-        id: generateId(),
+        id: budgetData.id || generateId(),
         spent: 0,
         createdAt: new Date(),
       };
@@ -339,7 +339,7 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   // ── Goals ──
   addGoal: (goalData) =>
     set((state) => ({
-      goals: [...state.goals, { ...goalData, id: generateId(), createdAt: new Date() }],
+      goals: [...state.goals, { ...goalData, id: goalData.id || generateId(), createdAt: new Date() }],
     })),
 
   updateGoal: (id, data) =>
@@ -355,7 +355,7 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   // ── Subscriptions ──
   addSubscription: (subData) =>
     set((state) => ({
-      subscriptions: [...state.subscriptions, { ...subData, id: generateId(), createdAt: new Date() }],
+      subscriptions: [...state.subscriptions, { ...subData, id: subData.id || generateId(), createdAt: new Date() }],
     })),
 
   updateSubscription: (id, data) =>

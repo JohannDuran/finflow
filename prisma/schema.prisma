@@ -1,16 +1,171 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider   = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String   @id @default(uuid()) // Se vincula manual con supabase auth.users
+  email           String   @unique
+  name            String
+  avatarUrl       String?
+  defaultCurrency String   @default("MXN")
+  preferredLocale String   @default("es-MX")
+  theme           String   @default("system")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  wallets       Wallet[]
+  transactions  Transaction[]
+  categories    Category[]
+  budgets       Budget[]
+  tags          Tag[]
+  goals         Goal[]
+  subscriptions Subscription[]
+}
+
+model Wallet {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  type        String   // 'cash' | 'bank' | 'credit' | 'ewallet' | 'crypto'
+  currency    String
+  balance     Float    @default(0)
+  creditLimit Float?
+  icon        String
+  color       String
+  isArchived  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[] @relation("WalletTransactions")
+  transfersIn  Transaction[] @relation("TransferToWallet")
+  budgets      Budget[]
+  goals        Goal[]
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String?  // Nulo si es categoría global/por defecto
+  parentId  String?
+  name      String
+  icon      String
+  color     String
+  type      String   // 'income' | 'expense'
+  isDefault Boolean  @default(false)
+
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+  budgets       Budget[]
+  subscriptions Subscription[]
+  parent        Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children      Category[]     @relation("CategoryHierarchy")
+}
+
+model Transaction {
+  id                 String   @id @default(uuid())
+  walletId           String
+  userId             String
+  type               String   // 'income' | 'expense' | 'transfer'
+  amount             Float
+  currency           String
+  categoryId         String
+  description        String
+  note               String?
+  date               DateTime @db.Date
+  isRecurring        Boolean  @default(false)
+  // Campos de recurrencia en json o columnas, simplicado por ahora
+  recurringFrequency String?  // 'daily' | 'weekly' | 'monthly' | 'yearly'
+  recurringInterval  Int?
+  recurringEndDate   DateTime? @db.Date
+  transferToWalletId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet           Wallet    @relation("WalletTransactions", fields: [walletId], references: [id], onDelete: Cascade)
+  transferToWallet Wallet?   @relation("TransferToWallet", fields: [transferToWalletId], references: [id])
+  category         Category  @relation(fields: [categoryId], references: [id])
+  tags             Tag[]     @relation("TransactionTags")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[] @relation("TransactionTags")
+}
+
+model Budget {
+  id         String   @id @default(uuid())
+  userId     String
+  walletId   String?
+  name       String
+  amount     Float
+  spent      Float    @default(0)
+  period     String   // 'weekly' | 'biweekly' | 'monthly' | 'yearly'
+  categoryId String
+  startDate  DateTime @db.Date
+  endDate    DateTime? @db.Date
+  rollover   Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet     Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+
+model Goal {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String
+  type          String   // 'savings' | 'debt_payoff' | 'emergency' | 'custom'
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  deadline      DateTime? @db.Date
+  icon          String
+  color         String
+  walletId      String?
+  isCompleted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet? @relation(fields: [walletId], references: [id], onDelete: SetNull)
+}
+
+model Subscription {
+  id           String   @id @default(uuid())
+  userId       String
+  name         String
+  amount       Float
+  currency     String
+  billingCycle String   // 'weekly' | 'monthly' | 'yearly'
+  categoryId   String
+  nextBillDate DateTime @db.Date
+  icon         String
+  color        String
+  isActive     Boolean  @default(true)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
 }

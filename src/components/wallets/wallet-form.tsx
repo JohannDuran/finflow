@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useFinFlowStore } from "@/store";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import type { WalletType, Wallet } from "@/types";
+import { createWalletAction, updateWalletAction } from "@/app/actions/wallet.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,14 +85,17 @@ export function WalletFormModal() {
     resetForm();
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
       toast.error("Ingresa un nombre");
       return;
     }
 
+    const optimisticId = isEditing && editWallet ? editWallet.id : generateId();
+
     const walletData = {
+      id: optimisticId,
       userId: "u1",
       name: name.trim(),
       type,
@@ -106,10 +110,20 @@ export function WalletFormModal() {
 
     if (isEditing && editWallet) {
       updateWallet(editWallet.id, walletData);
-      toast.success("Wallet actualizado");
+      const res = await updateWalletAction("u1", editWallet.id, walletData);
+      if (res.success) {
+        toast.success("Wallet actualizado");
+      } else {
+        toast.error("Falló la actualización: " + res.error);
+      }
     } else {
       addWallet(walletData);
-      toast.success("Wallet creado");
+      const res = await createWalletAction(walletData);
+      if (res.success) {
+        toast.success("Wallet creado");
+      } else {
+        toast.error("Falló la creación: " + res.error);
+      }
     }
 
     handleClose();

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/shared/logo";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import {
   Wallet,
   PieChart,
@@ -65,7 +65,6 @@ const plans = [
 ];
 
 export default function LandingPage() {
-  const { theme, setTheme } = useTheme();
   const [annual, setAnnual] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -95,15 +94,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-muted-foreground"
-            >
-              <Sun className="w-4 h-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute w-4 h-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
+            <ThemeToggle size="icon-sm" />
             <Link href="/login">
               <Button variant="ghost" size="sm">Iniciar sesión</Button>
             </Link>
