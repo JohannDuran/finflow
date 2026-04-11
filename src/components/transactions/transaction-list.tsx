@@ -22,7 +22,8 @@ export function TransactionList({ transactions, categories, wallets }: Transacti
 
     const groups = new Map<string, Transaction[]>();
     sorted.forEach((tx) => {
-      const key = tx.date;
+      const key = String(tx.date).split("T")[0];
+      
       const existing = groups.get(key) || [];
       existing.push(tx);
       groups.set(key, existing);

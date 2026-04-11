@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,14 +24,15 @@ import {
   Github,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PWAInstallButton } from "@/components/shared/pwa-install-button";
 
-const features = [
+const features: { icon: React.ElementType; title: string; desc: string; pwa?: boolean }[] = [
   { icon: Wallet, title: "Múltiples wallets", desc: "Efectivo, banco, crédito y crypto. Todo en un vistazo." },
   { icon: PieChart, title: "Presupuestos inteligentes", desc: "Fija límites por categoría y nunca te pases." },
   { icon: Globe, title: "Multi-moneda", desc: "Pesos, dólares, euros. Conversión automática." },
   { icon: Sparkles, title: "AI integrada", desc: "Categorización automática y escaneo de recibos." },
   { icon: Users, title: "Finanzas compartidas", desc: "Maneja gastos en pareja, con roommates o familia." },
-  { icon: Smartphone, title: "Donde quieras", desc: "Web, móvil y offline. Siempre sincronizado." },
+  { icon: Smartphone, title: "Donde quieras", desc: "Web, móvil y offline. Siempre sincronizado.", pwa: true },
 ];
 
 const testimonials = [
@@ -139,6 +140,7 @@ export default function LandingPage() {
                 Ver demo
               </Button>
             </Link>
+            <PWAInstallButton variant="hero" />
           </div>
 
           <p className="text-xs text-muted-foreground mt-4">
@@ -189,6 +191,11 @@ export default function LandingPage() {
                     </div>
                     <h3 className="font-semibold font-display text-lg mb-2">{feat.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">{feat.desc}</p>
+                    {feat.pwa && (
+                      <div className="mt-4">
+                        <PWAInstallButton variant="feature" />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );

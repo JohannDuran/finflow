@@ -147,12 +147,14 @@ export interface Subscription {
   userId: string;
   name: string;
   amount: number;
+  slug?: string;
   currency: Currency;
   billingCycle: BillingCycle;
   categoryId: string;
   category?: Category;
   nextBillDate: string;
   icon: string;
+  platformId?: string;
   color: string;
   isActive: boolean;
   notes?: string;

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useFinFlowStore } from "@/store";
+import { generateId } from "@/lib/utils";
+import { createTransactionAction } from "@/app/actions/transaction.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +24,7 @@ import {
 import { toast } from "sonner";
 
 export function TransferFormModal() {
-  const { activeModal, setActiveModal, wallets, addTransaction } = useFinFlowStore();
+  const { activeModal, setActiveModal, wallets, addTransaction, user } = useFinFlowStore();
 
   const isOpen = activeModal === "transfer-form";
   const activeWallets = wallets.filter((w) => !w.isArchived);
@@ -61,18 +63,25 @@ export function TransferFormModal() {
 
     const fromWallet = wallets.find((w) => w.id === fromWalletId);
 
-    addTransaction({
-      type: "transfer",
-      amount: numAmount,
+    const generatedId = generateId();
+    const txData = {
+      type: "transfer" as const,
+      amount: Number(amount),
       currency: fromWallet?.currency || "MXN",
       walletId: fromWalletId,
-      userId: "u1",
+      userId: user?.id || "",
       categoryId: "cat-transfer",
       description: description || "Transferencia",
       date,
       isRecurring: false,
       tags: [],
       transferToWalletId: toWalletId,
+    };
+
+    addTransaction({ ...txData, id: generatedId });
+    createTransactionAction({ ...txData, id: generatedId }).catch(err => {
+      console.error(err);
+      toast.error("Error al guardar transferencia en la nube");
     });
 
     toast.success("Transferencia realizada");

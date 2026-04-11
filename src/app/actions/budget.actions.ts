@@ -2,6 +2,9 @@
 
 import { budgetService } from "@/lib/services/budget.service";
 import type { Budget } from "@/types";
+import { createClient } from "@/lib/supabase/server";
+import { sanitizeError } from "@/lib/utils";
+import logger from "@/lib/logger";
 
 /**
  * Normaliza las llaves de la capa frontend hacia la estructura de Prisma
@@ -27,47 +30,59 @@ function mapFrontendToDb(frontendBudget: Partial<Budget>) {
 
 export async function createBudgetAction(budget: Omit<Budget, "createdAt" | "updatedAt" | "spent"> & { id?: string }) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
     const dbData = mapFrontendToDb(budget);
 
-    const newBudget = await budgetService.createBudget(budget.userId, dbData);
+    const newBudget = await budgetService.createBudget(user.id, dbData);
 
     return { success: true, data: newBudget };
   } catch (error: any) {
-    console.error("❌ Error en createBudgetAction:", error);
+    logger.error({ err: error }, "createBudgetAction failed");
     return { success: false, error: error.message };
   }
 }
 
 export async function updateBudgetAction(
-  userId: string,
+  userId: string, // Kept for signature compatibility
   budgetId: string,
   data: Partial<Budget>
 ) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
     const dbData = mapFrontendToDb(data);
 
     // Evitamos enviar el id dentro del data de update
     delete dbData.id;
 
     const updatedBudget = await budgetService.updateBudget(
-      userId,
+      user.id,
       budgetId,
       dbData
     );
 
     return { success: true, data: updatedBudget };
   } catch (error: any) {
-    console.error("❌ Error en updateBudgetAction:", error);
+    logger.error({ err: error }, "updateBudgetAction failed");
     return { success: false, error: error.message };
   }
 }
 
 export async function deleteBudgetAction(userId: string, budgetId: string) {
   try {
-    await budgetService.deleteBudget(userId, budgetId);
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    await budgetService.deleteBudget(user.id, budgetId);
     return { success: true };
   } catch (error: any) {
-    console.error("❌ Error en deleteBudgetAction:", error);
+    logger.error({ err: error }, "deleteBudgetAction failed");
     return { success: false, error: error.message };
   }
 }

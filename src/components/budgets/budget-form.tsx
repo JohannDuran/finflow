@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useFinFlowStore } from "@/store";
 import { cn, generateId } from "@/lib/utils";
 import type { BudgetPeriod, Budget } from "@/types";
-import { createBudgetAction, updateBudgetAction } from "@/app/actions/budget.actions";
+import { createBudgetAction, updateBudgetAction, deleteBudgetAction } from "@/app/actions/budget.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,8 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CategoryPicker } from "@/components/shared/category-picker";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 const periodOptions: { value: BudgetPeriod; label: string }[] = [
   { value: "weekly", label: "Semanal" },
@@ -34,7 +45,7 @@ const periodOptions: { value: BudgetPeriod; label: string }[] = [
 ];
 
 export function BudgetFormModal() {
-  const { activeModal, setActiveModal, editingItem, setEditingItem, categories, wallets, addBudget, updateBudget } = useFinFlowStore();
+  const { activeModal, setActiveModal, editingItem, setEditingItem, categories, wallets, addBudget, updateBudget, deleteBudget, user } = useFinFlowStore();
 
   const isOpen = activeModal === "budget-form";
   const editBudget = editingItem as Budget | null;
@@ -46,6 +57,7 @@ export function BudgetFormModal() {
   const [categoryId, setCategoryId] = useState("");
   const [walletId, setWalletId] = useState("");
   const [rollover, setRollover] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
 
@@ -74,8 +86,24 @@ export function BudgetFormModal() {
   function handleClose() {
     setActiveModal(null);
     setEditingItem(null);
+    setShowDeleteConfirm(false);
     resetForm();
   }
+
+  function handleDelete() {
+    if (!editBudget) return;
+    deleteBudget(editBudget.id);
+    toast.success("Presupuesto eliminado");
+    deleteBudgetAction(user?.id || "", editBudget.id).catch((err) => {
+      console.error(err);
+      toast.error("Error al eliminar en la nube");
+    });
+    handleClose();
+  }
+
+  const getImpactMessage = () => {
+    return "Se eliminará de forma permanente esta planificación de presupuesto e historial de monitoreo. Las transacciones subyacentes NO serán eliminadas.";
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -95,7 +123,7 @@ export function BudgetFormModal() {
 
     const budgetData = {
       id: optimisticId,
-      userId: "u1",
+      userId: user?.id || "",
       name: name || cat?.name || "Presupuesto",
       amount: numAmount,
       period,
@@ -108,7 +136,7 @@ export function BudgetFormModal() {
 
     if (isEditing && editBudget) {
       updateBudget(editBudget.id, budgetData);
-      const res = await updateBudgetAction("u1", editBudget.id, budgetData);
+      const res = await updateBudgetAction(user?.id || "", editBudget.id, budgetData);
       if (res.success) {
         toast.success("Presupuesto actualizado");
       } else {
@@ -228,6 +256,11 @@ export function BudgetFormModal() {
           </div>
 
           <div className="flex gap-3 pt-2">
+            {isEditing && (
+              <Button type="button" variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="px-3 shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
               Cancelar
             </Button>
@@ -237,6 +270,29 @@ export function BudgetFormModal() {
           </div>
         </form>
       </DialogContent>
+
+      {/* Confirmation Dialog */}
+      {isEditing && (
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar presupuesto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción es irreversible. <br />
+                <span className="font-medium text-foreground mt-2 block">
+                  {getImpactMessage()}
+                </span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Sí, eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Dialog>
   );
 }

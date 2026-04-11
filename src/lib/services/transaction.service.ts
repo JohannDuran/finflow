@@ -19,34 +19,24 @@ export const transactionService = {
   },
 
   async createTransaction(userId: string, data: any) {
-    return prisma.$transaction(async (tx) => {
-      // 1. Create the transaction
-      // Usamos (tx as any) temporalmente para evitar un bug de tipado en Prisma 
-      // donde omite 'transaction' dentro del bloque interactivo de tx.
-      const transaction = await (tx as any).transaction.create({
-        data: {
-          ...data,
-          userId,
-        },
-      });
-
-      // 2. Adjust wallet balance
-      // Logic for adjustment would depend on income/expense/transfer
-      // ... placeholder logic omitted for architecture ...
-
-      return transaction;
+    const { tagIds, ...rest } = data;
+    return prisma.transaction.create({
+      data: {
+        ...rest,
+        userId,
+        ...(tagIds?.length ? { tags: { connect: tagIds.map((id: string) => ({ id })) } } : {}),
+      },
     });
   },
 
   async updateTransaction(userId: string, transactionId: string, data: any) {
-    return prisma.$transaction(async (tx) => {
-      const transaction = await (tx as any).transaction.update({
-        where: { id: transactionId, userId },
-        data,
-      });
-
-      // Placeholder for wallet logic adjustment when auth is fully tied
-      return transaction;
+    const { tagIds, ...rest } = data;
+    return prisma.transaction.update({
+      where: { id: transactionId, userId },
+      data: {
+        ...rest,
+        ...(tagIds !== undefined ? { tags: { set: tagIds.map((id: string) => ({ id })) } } : {}),
+      },
     });
   },
 

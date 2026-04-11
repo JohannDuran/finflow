@@ -1,0 +1,52 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+
+export async function createTagAction(data: { name: string; color: string }) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const tag = await prisma.tag.create({ data: { ...data, userId: user.id } });
+    return { success: true, data: tag };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateTagAction(tagId: string, data: { name?: string; color?: string }) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const tag = await prisma.tag.update({
+      where: { id: tagId, userId: user.id },
+      data,
+    });
+    return { success: true, data: tag };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTagAction(tagId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Desconectar de transacciones antes de eliminar
+    await prisma.tag.update({
+      where: { id: tagId, userId: user.id },
+      data: { transactions: { set: [] } },
+    });
+
+    await prisma.tag.delete({ where: { id: tagId, userId: user.id } });
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

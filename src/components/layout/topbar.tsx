@@ -27,7 +27,7 @@ export function Topbar() {
         <div>
           <h1 className="text-lg sm:text-xl font-bold font-display tracking-tight">{title}</h1>
           <p className="text-xs text-muted-foreground hidden sm:block">
-            Hola, {user.name} 👋
+            {user?.name ? `Hola, ${user.name} 👋` : "Cargando..."}
           </p>
         </div>
       </div>

@@ -46,12 +46,12 @@ export function TransactionItem({ transaction, category, wallet, onClick }: Tran
               <span className="text-xs text-muted-foreground">{wallet.name}</span>
             </>
           )}
-          {transaction.tags.length > 0 && (
+          {transaction.tags && transaction.tags.length > 0 && (
             <>
               <span className="text-xs text-muted-foreground">·</span>
-              {transaction.tags.slice(0, 2).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                  #{tag}
+              {transaction.tags.slice(0, 2).map((tag: any) => (
+                <Badge key={typeof tag === 'string' ? tag : tag.id || tag.name} variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                  #{typeof tag === 'string' ? tag : tag.name}
                 </Badge>
               ))}
             </>

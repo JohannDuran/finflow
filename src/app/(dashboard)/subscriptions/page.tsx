@@ -20,6 +20,8 @@ import {
   DollarSign,
   CalendarDays,
 } from "lucide-react";
+import { SubscriptionFormModal } from "@/components/subscriptions/subscription-form";
+import { PlatformLogo } from "@/components/shared/platform-logo";
 
 const cycleLabels: Record<string, string> = {
   weekly: "Semanal",
@@ -28,7 +30,7 @@ const cycleLabels: Record<string, string> = {
 };
 
 export default function SubscriptionsPage() {
-  const { subscriptions, categories } = useFinFlowStore();
+  const { subscriptions, categories, setActiveModal, setEditingItem } = useFinFlowStore();
 
   const activeSubs = subscriptions.filter((s) => s.isActive);
 
@@ -41,7 +43,7 @@ export default function SubscriptionsPage() {
     const yearlyTotal = monthlyTotal * 12;
     const nextBill = activeSubs
       .filter((s) => s.nextBillDate)
-      .sort((a, b) => a.nextBillDate.localeCompare(b.nextBillDate))[0];
+      .sort((a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime())[0];
     const daysToNext = nextBill
       ? Math.ceil(
           (new Date(nextBill.nextBillDate).getTime() - Date.now()) /
@@ -71,7 +73,7 @@ export default function SubscriptionsPage() {
   // Upcoming bills sorted by date
   const upcomingBills = useMemo(() => {
     return [...activeSubs]
-      .sort((a, b) => a.nextBillDate.localeCompare(b.nextBillDate))
+      .sort((a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime())
       .slice(0, 5);
   }, [activeSubs]);
 
@@ -85,7 +87,13 @@ export default function SubscriptionsPage() {
             {summary.count} suscripciones activas
           </p>
         </div>
-        <Button className="gap-2">
+        <Button 
+          className="gap-2"
+          onClick={() => {
+            setEditingItem(null);
+            setActiveModal("subscription-form");
+          }}
+        >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Nueva suscripción</span>
         </Button>
@@ -193,13 +201,20 @@ export default function SubscriptionsPage() {
                     );
 
                     return (
-                      <div key={sub.id}>
+                      <div 
+                        key={sub.id} 
+                        className="cursor-pointer hover:bg-muted/50 rounded-lg transition-colors group px-2 -mx-2"
+                        onClick={() => {
+                          setEditingItem(sub);
+                          setActiveModal("subscription-form");
+                        }}
+                      >
                         <div className="flex items-center gap-3 py-3">
                           <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
                             style={{ backgroundColor: `${sub.color}15` }}
                           >
-                            <IconRenderer name={sub.icon} size={18} />
+                            <PlatformLogo sub={sub} size={20} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{sub.name}</p>
@@ -319,6 +334,8 @@ export default function SubscriptionsPage() {
           </Card>
         </div>
       </div>
+
+      <SubscriptionFormModal />
     </div>
   );
 }

@@ -19,9 +19,13 @@ export const subscriptionService = {
   },
 
   async updateSubscription(userId: string, subscriptionId: string, data: any) {
+    const { categoryId, ...rest } = data;
     return prisma.subscription.update({
       where: { id: subscriptionId, userId },
-      data,
+      data: {
+        ...rest,
+        ...(categoryId && { category: { connect: { id: categoryId } } }),
+      },
     });
   },
 

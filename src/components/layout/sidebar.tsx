@@ -96,12 +96,12 @@ export function Sidebar() {
         <div className="p-3 space-y-2">
           <div className={cn("flex items-center gap-3 px-3 py-2", sidebarCollapsed && "justify-center")}>
             <Avatar className="w-8 h-8">
-              <AvatarFallback className="text-xs">{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="text-xs">{user?.name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
             </Avatar>
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-sm font-medium truncate">{user?.name || "Cargando..."}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
               </div>
             )}
             {!sidebarCollapsed && (

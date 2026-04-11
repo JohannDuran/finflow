@@ -132,10 +132,12 @@ export default function ReportsPage() {
   const dailyCashFlow = useMemo(() => {
     const map = new Map<string, { income: number; expense: number }>();
     filtered.forEach((t) => {
-      const existing = map.get(t.date) || { income: 0, expense: 0 };
+      const dateStr = String(t.date).split("T")[0];
+
+      const existing = map.get(dateStr) || { income: 0, expense: 0 };
       if (t.type === "income") existing.income += t.amount;
       if (t.type === "expense") existing.expense += t.amount;
-      map.set(t.date, existing);
+      map.set(dateStr, existing);
     });
     return Array.from(map.entries())
       .map(([date, vals]) => ({

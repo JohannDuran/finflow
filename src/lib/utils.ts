@@ -63,6 +63,12 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 }
 
+/** Sanitizes error messages before logging to prevent log injection (CWE-117) */
+export function sanitizeError(error: unknown): string {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.replace(/[\r\n]/g, " ").replace(/[\x00-\x1F\x7F]/g, "");
+}
+
 export function getPercentageChange(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / Math.abs(previous)) * 100);

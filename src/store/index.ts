@@ -57,6 +57,7 @@ interface FinFlowState {
 
   // Actions — Tags
   addTag: (tag: Omit<Tag, "id">) => void;
+  updateTag: (id: string, data: Partial<Tag>) => void;
   deleteTag: (id: string) => void;
 
   // Actions — Goals
@@ -109,14 +110,14 @@ function calculateBudgetSpent(
 
 export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   // Initial data
-  user: mockUser,
-  transactions: mockTransactions,
-  wallets: mockWallets,
-  budgets: mockBudgets,
-  categories: defaultCategories,
-  tags: mockTags,
-  goals: mockGoals,
-  subscriptions: mockSubscriptions,
+  user: null as any,
+  transactions: [],
+  wallets: [],
+  budgets: [],
+  categories: [],
+  tags: [],
+  goals: [],
+  subscriptions: [],
 
   // UI state
   sidebarCollapsed: false,
@@ -310,7 +311,7 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   // ── Categories ──
   addCategory: (catData) =>
     set((state) => ({
-      categories: [...state.categories, { ...catData, id: generateId() }],
+      categories: [...state.categories, { ...catData, id: (catData as any).id || generateId() }],
     })),
 
   updateCategory: (id, data) =>
@@ -328,7 +329,12 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   // ── Tags ──
   addTag: (tagData) =>
     set((state) => ({
-      tags: [...state.tags, { ...tagData, id: generateId() }],
+      tags: [...state.tags, { ...tagData, id: (tagData as any).id || generateId() }],
+    })),
+
+  updateTag: (id, data) =>
+    set((state) => ({
+      tags: state.tags.map((t) => (t.id === id ? { ...t, ...data } : t)),
     })),
 
   deleteTag: (id) =>

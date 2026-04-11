@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFinFlowStore } from "@/store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import {
   Flame,
 } from "lucide-react";
 import type { Goal } from "@/types";
+import { GoalFormModal } from "@/components/goals/goal-form";
 
 const goalTypeLabels: Record<string, string> = {
   savings: "Ahorro",
@@ -37,6 +38,7 @@ const goalTypeColors: Record<string, string> = {
 };
 
 function GoalCard({ goal }: { goal: Goal }) {
+  const { setActiveModal, setEditingItem } = useFinFlowStore();
   const percentage = Math.min(
     Math.round((goal.currentAmount / goal.targetAmount) * 100),
     100
@@ -58,8 +60,12 @@ function GoalCard({ goal }: { goal: Goal }) {
 
   return (
     <Card
+      onClick={() => {
+        setEditingItem(goal);
+        setActiveModal("goal-form");
+      }}
       className={cn(
-        "relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
+        "cursor-pointer relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
         goal.isCompleted && "opacity-70"
       )}
     >
@@ -162,7 +168,7 @@ function GoalCard({ goal }: { goal: Goal }) {
 }
 
 export default function GoalsPage() {
-  const { goals } = useFinFlowStore();
+  const { goals, setActiveModal, setEditingItem } = useFinFlowStore();
 
   const activeGoals = goals.filter((g) => !g.isCompleted);
   const completedGoals = goals.filter((g) => g.isCompleted);
@@ -193,7 +199,13 @@ export default function GoalsPage() {
             {completedGoals.length} completadas
           </p>
         </div>
-        <Button className="gap-2">
+        <Button 
+          className="gap-2"
+          onClick={() => {
+            setEditingItem(null);
+            setActiveModal("goal-form");
+          }}
+        >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Nueva meta</span>
         </Button>
@@ -287,6 +299,8 @@ export default function GoalsPage() {
           </div>
         </>
       )}
+
+      <GoalFormModal />
     </div>
   );
 }

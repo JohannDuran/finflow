@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useFinFlowStore } from "@/store";
 import { cn, generateId } from "@/lib/utils";
 import type { WalletType, Wallet } from "@/types";
-import { createWalletAction, updateWalletAction } from "@/app/actions/wallet.actions";
+import { createWalletAction, updateWalletAction, deleteWalletAction } from "@/app/actions/wallet.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { IconRenderer } from "@/components/shared/icon-renderer";
 import { currencies } from "@/lib/constants";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import type { Currency } from "@/types";
 
 const walletTypes: { value: WalletType; label: string; icon: string }[] = [
@@ -41,7 +52,17 @@ const walletColors = [
 ];
 
 export function WalletFormModal() {
-  const { activeModal, setActiveModal, editingItem, setEditingItem, addWallet, updateWallet } = useFinFlowStore();
+  const { 
+    activeModal, 
+    setActiveModal, 
+    editingItem, 
+    setEditingItem, 
+    addWallet, 
+    updateWallet,
+    deleteWallet,
+    transactions,
+    user 
+  } = useFinFlowStore();
 
   const isOpen = activeModal === "wallet-form";
   const editWallet = editingItem as Wallet | null;
@@ -54,6 +75,7 @@ export function WalletFormModal() {
   const [creditLimit, setCreditLimit] = useState("");
   const [icon, setIcon] = useState("Building2");
   const [color, setColor] = useState("#3B82F6");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (isEditing && editWallet) {
@@ -82,8 +104,26 @@ export function WalletFormModal() {
   function handleClose() {
     setActiveModal(null);
     setEditingItem(null);
+    setShowDeleteConfirm(false);
     resetForm();
   }
+
+  function handleDelete() {
+    if (!editWallet) return;
+    deleteWallet(editWallet.id);
+    toast.success("Wallet eliminado");
+    deleteWalletAction(user?.id || "", editWallet.id).catch((err) => {
+      console.error(err);
+      toast.error("Error al eliminar en la nube");
+    });
+    handleClose();
+  }
+
+  const getImpactMessage = () => {
+    if (!editWallet) return null;
+    const txCount = transactions.filter(t => t.walletId === editWallet.id).length;
+    return `Se eliminará de forma permanente esta cuenta y las ${txCount} transacciones asociadas a ella. Los balances globales se re-calcularán sin esta cuenta.`;
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,7 +136,7 @@ export function WalletFormModal() {
 
     const walletData = {
       id: optimisticId,
-      userId: "u1",
+      userId: user?.id || "",
       name: name.trim(),
       type,
       currency,
@@ -110,7 +150,7 @@ export function WalletFormModal() {
 
     if (isEditing && editWallet) {
       updateWallet(editWallet.id, walletData);
-      const res = await updateWalletAction("u1", editWallet.id, walletData);
+      const res = await updateWalletAction(user?.id || "", editWallet.id, walletData);
       if (res.success) {
         toast.success("Wallet actualizado");
       } else {
@@ -246,6 +286,11 @@ export function WalletFormModal() {
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
+            {isEditing && (
+              <Button type="button" variant="destructive" onClick={() => setShowDeleteConfirm(true)} className="px-3 shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
               Cancelar
             </Button>
@@ -255,6 +300,29 @@ export function WalletFormModal() {
           </div>
         </form>
       </DialogContent>
+
+      {/* Confirmation Dialog */}
+      {isEditing && (
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar wallet?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción es irreversible y afectará a tu información. <br />
+                <span className="font-medium text-foreground mt-2 block">
+                  {getImpactMessage()}
+                </span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Sí, eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Dialog>
   );
 }

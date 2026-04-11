@@ -52,10 +52,12 @@ export default function DashboardPage() {
     // Daily spending for bar chart
     const dailyMap = new Map<string, { income: number; expense: number }>();
     currentMonthTxs.forEach((t) => {
-      const existing = dailyMap.get(t.date) || { income: 0, expense: 0 };
+      const dateStr = String(t.date).split("T")[0];
+      
+      const existing = dailyMap.get(dateStr) || { income: 0, expense: 0 };
       if (t.type === "income") existing.income += t.amount;
       if (t.type === "expense") existing.expense += t.amount;
-      dailyMap.set(t.date, existing);
+      dailyMap.set(dateStr, existing);
     });
 
     const dailySpending = Array.from(dailyMap.entries())
