@@ -39,7 +39,7 @@ export default function LoginPage() {
 
       toast.success("¡Bienvenido de vuelta!");
       router.refresh(); // Crucial to update the server session state
-      router.push("/");
+      router.push("/dashboard");
     } catch (err: any) {
       toast.error(err.message || "Error al iniciar sesión");
       setIsLoading(false);
