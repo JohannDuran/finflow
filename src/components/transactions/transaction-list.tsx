@@ -16,14 +16,24 @@ export function TransactionList({ transactions, categories, wallets }: Transacti
   const { setActiveModal, setEditingItem } = useFinFlowStore();
 
   const grouped = useMemo(() => {
-    const sorted = [...transactions].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    // Primero, sanitizamos las fechas de todas las transacciones
+    const safeTransactions = transactions.map(tx => ({
+      ...tx,
+      date: tx.date && !isNaN(new Date(tx.date).getTime()) ? tx.date : new Date().toISOString()
+    }));
+
+    const sorted = [...safeTransactions].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      // Si alguna fecha es NaN (no debería ocurrir por la sanitización), la tratamos como 0
+      return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+    });
 
     const groups = new Map<string, Transaction[]>();
     sorted.forEach((tx) => {
-      const key = String(tx.date).split("T")[0];
-      
+      // Extraemos YYYY-MM-DD de forma segura
+      const dateStr = tx.date.split("T")[0];
+      const key = dateStr || "unknown";
       const existing = groups.get(key) || [];
       existing.push(tx);
       groups.set(key, existing);

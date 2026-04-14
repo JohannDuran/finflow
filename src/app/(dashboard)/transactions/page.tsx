@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useFinFlowStore } from "@/store";
 import { TransactionFilters } from "@/components/transactions/transaction-filters";
 import { TransactionList } from "@/components/transactions/transaction-list";
@@ -24,26 +24,50 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TransactionsPage() {
-  const { transactions, wallets, categories, setActiveModal, editingItem, deleteTransaction, setEditingItem } = useFinFlowStore();
+  const { transactions, wallets, categories, setActiveModal, editingItem, deleteTransaction, setEditingItem } =
+    useFinFlowStore();
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
   const [walletFilter, setWalletFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
+  // Diagnóstico: detecta transacciones con fecha inválida en el store original
+  useEffect(() => {
+    const invalid = transactions.filter(
+      (tx) => !tx.date || isNaN(new Date(tx.date).getTime())
+    );
+    if (invalid.length) {
+      console.warn("⚠️ Transacciones con fecha inválida encontradas:", invalid);
+    }
+  }, [transactions]);
+
+  // Filtrado + sanitización de fechas
   const filtered = useMemo(() => {
-    return transactions.filter((tx) => {
-      if (typeFilter !== "all" && tx.type !== typeFilter) return false;
-      if (walletFilter !== "all" && tx.walletId !== walletFilter) return false;
-      if (categoryFilter !== "all" && tx.categoryId !== categoryFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (!tx.description.toLowerCase().includes(q) && !tx.tags.some((t) => t.toLowerCase().includes(q))) {
-          return false;
+    return transactions
+      .filter((tx) => {
+        if (typeFilter !== "all" && tx.type !== typeFilter) return false;
+        if (walletFilter !== "all" && tx.walletId !== walletFilter) return false;
+        if (categoryFilter !== "all" && tx.categoryId !== categoryFilter) return false;
+        if (search) {
+          const q = search.toLowerCase();
+          if (
+            !tx.description.toLowerCase().includes(q) &&
+            !tx.tags.some((t) => t.toLowerCase().includes(q))
+          ) {
+            return false;
+          }
         }
-      }
-      return true;
-    });
+        return true;
+      })
+      .map((tx) => ({
+        ...tx,
+        // Asegura que la fecha sea una cadena ISO válida
+        date:
+          tx.date && !isNaN(new Date(tx.date).getTime())
+            ? tx.date
+            : new Date().toISOString(),
+      }));
   }, [transactions, typeFilter, walletFilter, categoryFilter, search]);
 
   const summary = useMemo(() => {
@@ -149,7 +173,10 @@ export default function TransactionsPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
                 Eliminar
               </AlertDialogAction>
             </AlertDialogFooter>
