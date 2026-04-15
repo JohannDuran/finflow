@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import { useFinFlowStore } from "@/store";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,8 +37,13 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebar, user } = useFinFlowStore();
+  const router = useRouter();
+  const { sidebarCollapsed, toggleSidebar, user, logout } = useFinFlowStore();
 
+  const handleLogout = () => {
+    logout();               // limpia el user en el store
+    router.push("/login");  // redirige a la página de login (ajusta la ruta si es diferente)
+  };
   return (
     <TooltipProvider delayDuration={0}>
       <aside
@@ -105,7 +111,13 @@ export function Sidebar() {
               </div>
             )}
             {!sidebarCollapsed && (
-              <Button variant="ghost" size="icon-sm" className="shrink-0 text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0 text-muted-foreground"
+                onClick={handleLogout}
+                aria-label="Cerrar sesión"
+              >
                 <LogOut className="w-4 h-4" />
               </Button>
             )}

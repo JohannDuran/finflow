@@ -18,7 +18,7 @@ import { generateId } from "@/lib/utils";
 
 interface FinFlowState {
   // Data
-  user: User;
+  user: User | null;
   transactions: Transaction[];
   wallets: Wallet[];
   budgets: Budget[];
@@ -34,6 +34,7 @@ interface FinFlowState {
 
   // Actions — User
   updateUser: (data: Partial<User>) => void;
+  logout: () => void;
 
   // Actions — Transactions
   addTransaction: (tx: Omit<Transaction, "id" | "createdAt" | "updatedAt"> & { id?: string }) => void;
@@ -125,8 +126,13 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   editingItem: null,
 
   // ── User ──
+  setUser: (userData: User) => set({ user: userData }),
   updateUser: (data) =>
-    set((state) => ({ user: { ...state.user, ...data } })),
+    set((state) => {
+      if (!state.user) throw new Error('Cannot update user before login');
+      return { user: { ...state.user, ...data } };
+    }),
+  logout: () => set({ user: null }),
 
   // ── Transactions ──
   addTransaction: (txData) =>
