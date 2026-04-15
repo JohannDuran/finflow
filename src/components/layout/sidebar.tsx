@@ -41,9 +41,10 @@ export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar, user, logout } = useFinFlowStore();
 
   const handleLogout = () => {
-    logout();               // limpia el user en el store
-    router.push("/login");  // redirige a la página de login (ajusta la ruta si es diferente)
+    logout();
+    router.push("/login");
   };
+  console.log("Sidebar - user desde store:", user);
   return (
     <TooltipProvider delayDuration={0}>
       <aside

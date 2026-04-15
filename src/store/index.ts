@@ -126,13 +126,24 @@ export const useFinFlowStore = create<FinFlowState>((set, get) => ({
   editingItem: null,
 
   // ── User ──
-  setUser: (userData: User) => set({ user: userData }),
-  updateUser: (data) =>
+  setUser: (userData: User) => {
+    console.trace("🔵 setUser llamado con:", userData);
+    set({ user: userData });
+  },
+  updateUser: (data) => {
+    console.trace("🟡 updateUser llamado con:", data);
     set((state) => {
       if (!state.user) throw new Error('Cannot update user before login');
       return { user: { ...state.user, ...data } };
-    }),
-  logout: () => set({ user: null }),
+    })
+  },
+  logout: () => {
+    console.log("🔴 logout ejecutado");
+    set({ user: null });
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
+    window.location.href = "/login"; // ← fuerza recarga completa
+  },
 
   // ── Transactions ──
   addTransaction: (txData) =>
