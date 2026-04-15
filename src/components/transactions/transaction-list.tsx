@@ -19,7 +19,9 @@ export function TransactionList({ transactions, categories, wallets }: Transacti
     // Primero, sanitizamos las fechas de todas las transacciones
     const safeTransactions = transactions.map(tx => ({
       ...tx,
-      date: tx.date && !isNaN(new Date(tx.date).getTime()) ? tx.date : new Date().toISOString()
+      date: tx.date && !isNaN(new Date(tx.date).getTime()) 
+        ? new Date(tx.date).toISOString() 
+        : new Date().toISOString()
     }));
 
     const sorted = [...safeTransactions].sort((a, b) => {

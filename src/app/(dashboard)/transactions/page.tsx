@@ -63,10 +63,9 @@ export default function TransactionsPage() {
       .map((tx) => ({
         ...tx,
         // Asegura que la fecha sea una cadena ISO válida
-        date:
-          tx.date && !isNaN(new Date(tx.date).getTime())
-            ? tx.date
-            : new Date().toISOString(),
+        date: tx.date && !isNaN(new Date(tx.date).getTime()) 
+          ? new Date(tx.date).toISOString() 
+          : new Date().toISOString()
       }));
   }, [transactions, typeFilter, walletFilter, categoryFilter, search]);
 
