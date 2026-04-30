@@ -98,3 +98,20 @@ export const currencyFlags: Record<Currency, string> = {
   PEN: "🇵🇪",
   CLP: "🇨🇱",
 };
+
+// Approximate exchange rates to USD (1 unit of currency = X USD)
+const ratesToUSD: Record<Currency, number> = {
+  USD: 1,
+  MXN: 0.058,
+  EUR: 1.08,
+  COP: 0.00024,
+  ARS: 0.00089,
+  BRL: 0.18,
+  PEN: 0.27,
+  CLP: 0.0011,
+};
+
+export function convertCurrency(amount: number, from: Currency, to: Currency): number {
+  if (from === to) return amount;
+  return (amount * ratesToUSD[from]) / ratesToUSD[to];
+}
