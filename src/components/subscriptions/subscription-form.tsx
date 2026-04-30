@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useFinFlowStore } from "@/store";
 import { cn, generateId } from "@/lib/utils";
 import type { BillingCycle, Subscription, Currency } from "@/types";
@@ -87,6 +87,21 @@ export function SubscriptionFormModal() {
   // Consider only expenses categories for subscriptions
   const expenseCategories = categories.filter((c) => c.type === "expense");
 
+  const resetForm = useCallback(() => {
+    setName("");
+    setIsNameManuallyEdited(false);
+    setAmount("");
+    setCurrency("MXN");
+    setBillingCycle("monthly");
+    setCategoryId("");
+    setNextBillDate("");
+    setNotes("");
+    setIsActive(true);
+    setIcon("CreditCard");
+    setColor("#EF4444");
+    setPlatformId(undefined);
+  }, []);
+
   useEffect(() => {
     if (isEditing && editSub) {
       setName(editSub.name);
@@ -103,22 +118,7 @@ export function SubscriptionFormModal() {
     } else {
       resetForm();
     }
-  }, [editSub, isEditing]);
-
-  function resetForm() {
-    setName("");
-    setIsNameManuallyEdited(false);
-    setAmount("");
-    setCurrency("MXN");
-    setBillingCycle("monthly");
-    setCategoryId("");
-    setNextBillDate("");
-    setNotes("");
-    setIsActive(true);
-    setIcon("CreditCard");
-    setColor("#EF4444");
-    setPlatformId(undefined);
-  }
+  }, [editSub, isEditing, resetForm]);
 
   function handleClose() {
     setActiveModal(null);
@@ -253,20 +253,19 @@ export function SubscriptionFormModal() {
               />
             </div>
             <div>
-              <Label htmlFor="sub-amount">Monto</Label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input
-                  id="sub-amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="200.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="pl-7 pr-3"
-                />
-              </div>
+              <Label>Período de cobro</Label>
+              <Select value={billingCycle} onValueChange={(v) => setBillingCycle(v as BillingCycle)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {billingCycles.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -288,19 +287,20 @@ export function SubscriptionFormModal() {
               </Select>
             </div>
             <div>
-              <Label>Período de cobro</Label>
-              <Select value={billingCycle} onValueChange={(v) => setBillingCycle(v as BillingCycle)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {billingCycles.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="sub-amount">Monto</Label>
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="sub-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="200.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="pl-7 pr-3"
+                />
+              </div>
             </div>
           </div>
 
