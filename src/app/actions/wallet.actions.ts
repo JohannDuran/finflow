@@ -52,8 +52,11 @@ export async function updateWalletAction(
 
     const dbData = mapFrontendToDb(data);
 
-    // Evitamos enviar el id dentro del data de update
+    // Evitamos enviar campos que Prisma no acepta en update directo
     delete dbData.id;
+    delete dbData.userId;
+    delete dbData.createdAt;
+    delete dbData.updatedAt;
 
     const updatedWallet = await walletService.updateWallet(
       user.id,

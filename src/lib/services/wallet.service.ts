@@ -24,9 +24,15 @@ export const walletService = {
   },
 
   async updateWallet(userId: string, walletId: string, data: any) {
+    const updateData = { ...data };
+    delete updateData.id;
+    delete updateData.userId;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+
     return prisma.wallet.update({
       where: { id: walletId, userId },
-      data,
+      data: updateData,
     });
   },
 
