@@ -57,8 +57,10 @@ const walletTypes: { value: WalletType; label: string; icon: string }[] = [
   { value: "cash", label: "Efectivo", icon: "Banknote" },
   { value: "bank", label: "Banco", icon: "Building2" },
   { value: "credit", label: "Crédito", icon: "CreditCard" },
+  { value: "loan", label: "Préstamo", icon: "Receipt" },
   { value: "ewallet", label: "E-wallet", icon: "Smartphone" },
   { value: "crypto", label: "Crypto", icon: "Bitcoin" },
+  { value: "investment", label: "Inversión", icon: "TrendingUp" },
 ];
 const walletColors = [
   "#22C55E", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444",
@@ -357,7 +359,7 @@ export function TransactionFormModal() {
               <div className="mb-2 p-3 rounded-xl border border-border bg-muted/30 space-y-3">
                 <Input placeholder="Nombre (ej: BBVA Débito)" value={newWalletName}
                   onChange={(e) => setNewWalletName(e.target.value)} className="h-8 text-sm" autoFocus />
-                <div className="grid grid-cols-5 gap-1.5">
+                <div className="grid grid-cols-3 sm:grid-cols-7 gap-1.5">
                   {walletTypes.map((wt) => (
                     <button key={wt.value} type="button" onClick={() => setNewWalletType(wt.value)}
                       className={cn("flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors cursor-pointer",

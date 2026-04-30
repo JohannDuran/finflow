@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useFinFlowStore } from "@/store";
 import { cn, generateId } from "@/lib/utils";
 import type { WalletType, Wallet } from "@/types";
@@ -42,9 +42,13 @@ const walletTypes: { value: WalletType; label: string; icon: string }[] = [
   { value: "cash", label: "Efectivo", icon: "Banknote" },
   { value: "bank", label: "Banco", icon: "Building2" },
   { value: "credit", label: "Crédito", icon: "CreditCard" },
+  { value: "loan", label: "Préstamo", icon: "Receipt" },
   { value: "ewallet", label: "E-wallet", icon: "Smartphone" },
   { value: "crypto", label: "Crypto", icon: "Bitcoin" },
+  { value: "investment", label: "Inversión", icon: "TrendingUp" },
 ];
+
+const debtWalletTypes: WalletType[] = ["credit", "loan"];
 
 const walletColors = [
   "#22C55E", "#3B82F6", "#A855F7", "#F59E0B", "#EF4444",
@@ -73,9 +77,23 @@ export function WalletFormModal() {
   const [currency, setCurrency] = useState<Currency>("MXN");
   const [balance, setBalance] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
+  const [monthlyPayment, setMonthlyPayment] = useState("");
+  const [paymentDueDay, setPaymentDueDay] = useState("");
   const [icon, setIcon] = useState("Building2");
   const [color, setColor] = useState("#3B82F6");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const resetForm = useCallback(() => {
+    setName("");
+    setType("bank");
+    setCurrency("MXN");
+    setBalance("");
+    setCreditLimit("");
+    setMonthlyPayment("");
+    setPaymentDueDay("");
+    setIcon("Building2");
+    setColor("#3B82F6");
+  }, []);
 
   useEffect(() => {
     if (isEditing && editWallet) {
@@ -84,22 +102,14 @@ export function WalletFormModal() {
       setCurrency(editWallet.currency);
       setBalance(editWallet.balance.toString());
       setCreditLimit(editWallet.creditLimit?.toString() || "");
+      setMonthlyPayment(editWallet.monthlyPayment?.toString() || "");
+      setPaymentDueDay(editWallet.paymentDueDay?.toString() || "");
       setIcon(editWallet.icon);
       setColor(editWallet.color);
     } else {
       resetForm();
     }
-  }, [editWallet, isEditing]);
-
-  function resetForm() {
-    setName("");
-    setType("bank");
-    setCurrency("MXN");
-    setBalance("");
-    setCreditLimit("");
-    setIcon("Building2");
-    setColor("#3B82F6");
-  }
+  }, [editWallet, isEditing, resetForm]);
 
   function handleClose() {
     setActiveModal(null);
@@ -133,6 +143,47 @@ export function WalletFormModal() {
     }
 
     const optimisticId = isEditing && editWallet ? editWallet.id : generateId();
+    const isDebtType = debtWalletTypes.includes(type);
+    const parsedCreditLimit = parseFloat(creditLimit);
+    const parsedMonthlyPayment = parseFloat(monthlyPayment);
+    const parsedPaymentDueDay = parseInt(paymentDueDay, 10);
+    const normalizedCreditLimit =
+      type === "credit" && creditLimit.trim() ? parsedCreditLimit : null;
+    const normalizedMonthlyPayment =
+      isDebtType && monthlyPayment.trim() ? parsedMonthlyPayment : null;
+    const normalizedPaymentDueDay =
+      isDebtType && paymentDueDay.trim() ? parsedPaymentDueDay : null;
+
+    if (
+      type === "credit" &&
+      creditLimit.trim() &&
+      (Number.isNaN(parsedCreditLimit) || parsedCreditLimit < 0)
+    ) {
+      toast.error("Ingresa un límite de crédito válido");
+      return;
+    }
+
+    if (
+      isDebtType &&
+      monthlyPayment.trim() &&
+      (Number.isNaN(parsedMonthlyPayment) || parsedMonthlyPayment < 0)
+    ) {
+      toast.error("Ingresa un pago mensual válido");
+      return;
+    }
+
+    if (
+      isDebtType &&
+      paymentDueDay.trim() &&
+      (
+        Number.isNaN(parsedPaymentDueDay) ||
+        parsedPaymentDueDay < 1 ||
+        parsedPaymentDueDay > 31
+      )
+    ) {
+      toast.error("El día límite de pago debe estar entre 1 y 31");
+      return;
+    }
 
     const walletData = {
       id: optimisticId,
@@ -141,7 +192,9 @@ export function WalletFormModal() {
       type,
       currency,
       balance: parseFloat(balance) || 0,
-      creditLimit: type === "credit" ? parseFloat(creditLimit) || undefined : undefined,
+      creditLimit: normalizedCreditLimit,
+      monthlyPayment: isDebtType ? normalizedMonthlyPayment : null,
+      paymentDueDay: isDebtType ? normalizedPaymentDueDay : null,
       icon,
       color,
       isArchived: false,
@@ -195,7 +248,7 @@ export function WalletFormModal() {
           {/* Type */}
           <div>
             <Label>Tipo</Label>
-            <div className="grid grid-cols-5 gap-2 mt-2">
+            <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 mt-2">
               {walletTypes.map((wt) => (
                 <button
                   key={wt.value}
@@ -237,31 +290,67 @@ export function WalletFormModal() {
 
           {/* Balance */}
           <div>
-            <Label htmlFor="wallet-balance">Balance {isEditing ? "actual" : "inicial"}</Label>
+            <Label htmlFor="wallet-balance">
+              {debtWalletTypes.includes(type)
+                ? "Saldo actual (negativo si debes)"
+                : `Balance ${isEditing ? "actual" : "inicial"}`}
+            </Label>
             <Input
               id="wallet-balance"
               type="number"
               step="0.01"
-              placeholder="0.00"
+              placeholder={debtWalletTypes.includes(type) ? "-5000.00" : "0.00"}
               value={balance}
               onChange={(e) => setBalance(e.target.value)}
               className="mt-1"
             />
           </div>
 
-          {/* Credit Limit */}
-          {type === "credit" && (
-            <div>
-              <Label htmlFor="credit-limit">Límite de crédito</Label>
-              <Input
-                id="credit-limit"
-                type="number"
-                step="0.01"
-                placeholder="15000.00"
-                value={creditLimit}
-                onChange={(e) => setCreditLimit(e.target.value)}
-                className="mt-1"
-              />
+          {/* Debt Details */}
+          {debtWalletTypes.includes(type) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {type === "credit" && (
+                <div>
+                  <Label htmlFor="credit-limit">Límite de crédito</Label>
+                  <Input
+                    id="credit-limit"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="15000.00"
+                    value={creditLimit}
+                    onChange={(e) => setCreditLimit(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="monthly-payment">Pago mensual</Label>
+                <Input
+                  id="monthly-payment"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="1200.00"
+                  value={monthlyPayment}
+                  onChange={(e) => setMonthlyPayment(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className={type === "credit" ? "sm:col-span-2" : undefined}>
+                <Label htmlFor="payment-due-day">Día límite de pago</Label>
+                <Input
+                  id="payment-due-day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  step="1"
+                  placeholder="15"
+                  value={paymentDueDay}
+                  onChange={(e) => setPaymentDueDay(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
             </div>
           )}
 

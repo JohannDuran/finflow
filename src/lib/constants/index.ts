@@ -138,16 +138,20 @@ export const walletTypeLabels: Record<string, string> = {
   cash: "Efectivo",
   bank: "Banco",
   credit: "Crédito",
+  loan: "Préstamo",
   ewallet: "E-wallet",
   crypto: "Crypto",
+  investment: "Inversión",
 };
 
 export const walletTypeIcons: Record<string, string> = {
   cash: "Banknote",
   bank: "Building2",
   credit: "CreditCard",
+  loan: "Receipt",
   ewallet: "Smartphone",
   crypto: "Bitcoin",
+  investment: "TrendingUp",
 };
 
 // ──────────────────────────────────────────────
