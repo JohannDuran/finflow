@@ -1,22 +1,29 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFinFlowStore } from "@/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CurrencyDisplay } from "@/components/shared/currency-display";
 import { IconRenderer } from "@/components/shared/icon-renderer";
 import { EmptyState } from "@/components/shared/empty-state";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency, convertCurrency } from "@/lib/utils";
+import { currencies } from "@/lib/constants";
+import type { Currency } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   CreditCard,
   Plus,
   Calendar,
   TrendingUp,
   Repeat,
-  AlertCircle,
   DollarSign,
   CalendarDays,
 } from "lucide-react";
@@ -29,46 +36,137 @@ const cycleLabels: Record<string, string> = {
   yearly: "Anual",
 };
 
-export default function SubscriptionsPage() {
-  const { subscriptions, categories, setActiveModal, setEditingItem } = useFinFlowStore();
+type ExchangeRatesResponse = {
+  target: Currency;
+  rates: Partial<Record<Currency, number>>;
+};
 
-  const activeSubs = subscriptions.filter((s) => s.isActive);
+type ExchangeRateState = {
+  target: Currency;
+  rates: Partial<Record<Currency, number>>;
+  error: string | null;
+};
+
+export default function SubscriptionsPage() {
+  const { subscriptions, categories, user, setActiveModal, setEditingItem } = useFinFlowStore();
+  const defaultCurrency = user?.defaultCurrency || "MXN";
+  const [displayCurrency, setDisplayCurrency] = useState<Currency>(defaultCurrency);
+  const [exchangeRateState, setExchangeRateState] = useState<ExchangeRateState>({
+    target: defaultCurrency,
+    rates: { [defaultCurrency]: 1 },
+    error: null,
+  });
+  const [now] = useState(() => Date.now());
+
+  const activeSubs = useMemo(
+    () => subscriptions.filter((subscription) => subscription.isActive),
+    [subscriptions]
+  );
+
+  const exchangeSourceKey = useMemo(() => {
+    const sourceCurrencies = new Set<Currency>([displayCurrency]);
+    activeSubs.forEach((subscription) => sourceCurrencies.add(subscription.currency));
+    return Array.from(sourceCurrencies).sort().join(",");
+  }, [activeSubs, displayCurrency]);
+
+  useEffect(() => {
+    let shouldIgnore = false;
+
+    async function loadExchangeRates() {
+      try {
+        const params = new URLSearchParams({
+          to: displayCurrency,
+          from: exchangeSourceKey,
+        });
+
+        const response = await fetch(`/api/exchange-rates?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error("No se pudieron obtener los tipos de cambio");
+        }
+
+        const data = (await response.json()) as ExchangeRatesResponse;
+        if (data.target !== displayCurrency) {
+          throw new Error("La moneda recibida no coincide con la solicitada");
+        }
+
+        if (!shouldIgnore) {
+          setExchangeRateState({
+            target: data.target,
+            rates: { ...data.rates, [data.target]: 1 },
+            error: null,
+          });
+        }
+      } catch (error) {
+        if (!shouldIgnore) {
+          setExchangeRateState({
+            target: displayCurrency,
+            rates: { [displayCurrency]: 1 },
+            error: error instanceof Error ? error.message : "No se pudieron obtener los tipos de cambio",
+          });
+        }
+      }
+    }
+
+    void loadExchangeRates();
+
+    return () => {
+      shouldIgnore = true;
+    };
+  }, [displayCurrency, exchangeSourceKey]);
+
+  /** Convert any amount to the selected display currency */
+  const convert = useCallback(
+    (amount: number, from: Currency) => {
+      if (from === displayCurrency) {
+        return amount;
+      }
+
+      if (exchangeRateState.target === displayCurrency) {
+        const rate = exchangeRateState.rates[from];
+        if (typeof rate === "number") {
+          return amount * rate;
+        }
+      }
+
+      return convertCurrency(amount, from, displayCurrency);
+    },
+    [displayCurrency, exchangeRateState.rates, exchangeRateState.target]
+  );
 
   const summary = useMemo(() => {
     const monthlyTotal = activeSubs.reduce((sum, s) => {
-      if (s.billingCycle === "weekly") return sum + s.amount * 4.33;
-      if (s.billingCycle === "yearly") return sum + s.amount / 12;
-      return sum + s.amount;
+      let monthly = s.amount;
+      if (s.billingCycle === "weekly") monthly = s.amount * 4.33;
+      if (s.billingCycle === "yearly") monthly = s.amount / 12;
+      return sum + convert(monthly, s.currency);
     }, 0);
+
     const yearlyTotal = monthlyTotal * 12;
+
     const nextBill = activeSubs
       .filter((s) => s.nextBillDate)
       .sort((a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime())[0];
     const daysToNext = nextBill
-      ? Math.ceil(
-          (new Date(nextBill.nextBillDate).getTime() - Date.now()) /
-            (1000 * 60 * 60 * 24)
-        )
+      ? Math.ceil((new Date(nextBill.nextBillDate).getTime() - now) / (1000 * 60 * 60 * 24))
       : null;
 
     return { monthlyTotal, yearlyTotal, nextBill, daysToNext, count: activeSubs.length };
-  }, [activeSubs]);
+  }, [activeSubs, convert, now]);
 
   // Group by category
   const groupedSubs = useMemo(() => {
     const map = new Map<string, typeof activeSubs>();
     activeSubs.forEach((s) => {
-      const catId = s.categoryId;
-      const existing = map.get(catId) || [];
+      const existing = map.get(s.categoryId) || [];
       existing.push(s);
-      map.set(catId, existing);
+      map.set(s.categoryId, existing);
     });
     return Array.from(map.entries()).map(([catId, subs]) => {
       const cat = categories.find((c) => c.id === catId);
-      const total = subs.reduce((sum, s) => sum + s.amount, 0);
+      const total = subs.reduce((sum, s) => sum + convert(s.amount, s.currency), 0);
       return { catId, catName: cat?.name || "Otro", catColor: cat?.color || "#64748B", subs, total };
     });
-  }, [activeSubs, categories]);
+  }, [activeSubs, categories, convert]);
 
   // Upcoming bills sorted by date
   const upcomingBills = useMemo(() => {
@@ -87,16 +185,30 @@ export default function SubscriptionsPage() {
             {summary.count} suscripciones activas
           </p>
         </div>
-        <Button 
-          className="gap-2"
-          onClick={() => {
-            setEditingItem(null);
-            setActiveModal("subscription-form");
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Nueva suscripción</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={displayCurrency} onValueChange={(v) => setDisplayCurrency(v as Currency)}>
+            <SelectTrigger className="w-[120px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {currencies.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.flag} {c.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            className="gap-2"
+            onClick={() => {
+              setEditingItem(null);
+              setActiveModal("subscription-form");
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nueva suscripción</span>
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -109,12 +221,9 @@ export default function SubscriptionsPage() {
                 <DollarSign className="w-4 h-4 text-rose-500" />
               </div>
             </div>
-            <CurrencyDisplay
-              amount={summary.monthlyTotal}
-              type="expense"
-              size="md"
-              className="font-bold"
-            />
+            <p className="text-base font-bold tabular-nums">
+              {formatCurrency(summary.monthlyTotal, displayCurrency)}
+            </p>
           </CardContent>
         </Card>
 
@@ -126,12 +235,9 @@ export default function SubscriptionsPage() {
                 <CalendarDays className="w-4 h-4 text-amber-500" />
               </div>
             </div>
-            <CurrencyDisplay
-              amount={summary.yearlyTotal}
-              type="expense"
-              size="md"
-              className="font-bold"
-            />
+            <p className="text-base font-bold tabular-nums">
+              {formatCurrency(summary.yearlyTotal, displayCurrency)}
+            </p>
           </CardContent>
         </Card>
 
@@ -158,11 +264,9 @@ export default function SubscriptionsPage() {
             </div>
             {summary.nextBill ? (
               <>
-                <p className="text-sm font-bold truncate">
-                  {summary.nextBill.name}
-                </p>
+                <p className="text-sm font-bold truncate">{summary.nextBill.name}</p>
                 <p className="text-[10px] text-muted-foreground">
-                  en {summary.daysToNext} días · {formatCurrency(summary.nextBill.amount)}
+                  en {summary.daysToNext} días · {formatCurrency(convert(summary.nextBill.amount, summary.nextBill.currency), displayCurrency)}
                 </p>
               </>
             ) : (
@@ -196,13 +300,14 @@ export default function SubscriptionsPage() {
                 <div className="space-y-1">
                   {activeSubs.map((sub, idx) => {
                     const daysUntil = Math.ceil(
-                      (new Date(sub.nextBillDate).getTime() - Date.now()) /
-                        (1000 * 60 * 60 * 24)
+                      (new Date(sub.nextBillDate).getTime() - now) / (1000 * 60 * 60 * 24)
                     );
+                    const converted = convert(sub.amount, sub.currency);
+                    const isDifferentCurrency = sub.currency !== displayCurrency;
 
                     return (
-                      <div 
-                        key={sub.id} 
+                      <div
+                        key={sub.id}
                         className="cursor-pointer hover:bg-muted/50 rounded-lg transition-colors group px-2 -mx-2"
                         onClick={() => {
                           setEditingItem(sub);
@@ -219,18 +324,13 @@ export default function SubscriptionsPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{sub.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px] px-1.5 py-0"
-                              >
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                                 {cycleLabels[sub.billingCycle]}
                               </Badge>
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 {daysUntil <= 7 ? (
-                                  <span className="text-amber-500 font-medium">
-                                    en {daysUntil} días
-                                  </span>
+                                  <span className="text-amber-500 font-medium">en {daysUntil} días</span>
                                 ) : (
                                   `en ${daysUntil} días`
                                 )}
@@ -239,8 +339,13 @@ export default function SubscriptionsPage() {
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-sm font-semibold">
-                              {formatCurrency(sub.amount)}
+                              {formatCurrency(converted, displayCurrency)}
                             </p>
+                            {isDifferentCurrency && (
+                              <p className="text-[10px] text-muted-foreground">
+                                {formatCurrency(sub.amount, sub.currency)}
+                              </p>
+                            )}
                             <p className="text-[10px] text-muted-foreground">
                               /{sub.billingCycle === "yearly" ? "año" : "mes"}
                             </p>
@@ -273,20 +378,16 @@ export default function SubscriptionsPage() {
                   return (
                     <div key={sub.id} className="flex items-center gap-3">
                       <div className="flex flex-col items-center w-10 shrink-0">
-                        <span className="text-lg font-bold leading-none">
-                          {date.getDate()}
-                        </span>
+                        <span className="text-lg font-bold leading-none">{date.getDate()}</span>
                         <span className="text-[10px] text-muted-foreground uppercase">
                           {date.toLocaleDateString("es-MX", { month: "short" })}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {sub.name}
-                        </p>
+                        <p className="text-sm font-medium truncate">{sub.name}</p>
                       </div>
                       <span className="text-sm font-semibold shrink-0">
-                        {formatCurrency(sub.amount)}
+                        {formatCurrency(convert(sub.amount, sub.currency), displayCurrency)}
                       </span>
                     </div>
                   );
@@ -308,11 +409,9 @@ export default function SubscriptionsPage() {
                 {groupedSubs.map((group) => (
                   <div key={group.catId}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">
-                        {group.catName}
-                      </span>
+                      <span className="text-sm font-medium">{group.catName}</span>
                       <span className="text-sm font-semibold">
-                        {formatCurrency(group.total)}
+                        {formatCurrency(group.total, displayCurrency)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
