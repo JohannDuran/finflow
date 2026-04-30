@@ -19,9 +19,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
 
     try {
@@ -32,16 +34,16 @@ export default function LoginPage() {
       });
 
       if (error) {
-        toast.error("Credenciales incorrectas");
+        setError("Email o contraseña incorrectos");
         setIsLoading(false);
         return;
       }
 
       toast.success("¡Bienvenido de vuelta!");
-      router.refresh(); // Crucial to update the server session state
+      router.refresh();
       router.push("/dashboard");
-    } catch (err: any) {
-      toast.error(err.message || "Error al iniciar sesión");
+    } catch {
+      setError("Error al iniciar sesión. Intenta de nuevo.");
       setIsLoading(false);
     }
   }
@@ -49,9 +51,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#8bc5a3]/5 via-transparent to-[#6fa8c9]/5" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8bc5a3]/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#6fa8c9]/10 rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#8bc5a3]/5 via-transparent to-[#6fa8c9]/5 pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#8bc5a3]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#6fa8c9]/10 rounded-full blur-3xl pointer-events-none" />
 
       <Card className="w-full max-w-md relative z-10 shadow-2xl border-border/50">
         <CardHeader className="text-center pb-2">
@@ -64,6 +66,11 @@ export default function LoginPage() {
 
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -73,6 +80,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1"
+                autoComplete="email"
                 disabled={isLoading}
               />
             </div>
@@ -87,6 +95,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pr-10"
+                  autoComplete="current-password"
                   disabled={isLoading}
                 />
                 <button
