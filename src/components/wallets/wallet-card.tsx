@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { CurrencyDisplay } from "@/components/shared/currency-display";
 import { IconRenderer } from "@/components/shared/icon-renderer";
 import { walletTypeLabels } from "@/lib/constants";
-import type { Wallet } from "@/types";
+import type { Transaction, Wallet } from "@/types";
 import { Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +14,45 @@ interface WalletCardProps {
   wallet: Wallet;
   onEdit: () => void;
   onClick?: () => void;
+  currentDate: Date;
+  transactions: Transaction[];
 }
 
-export function WalletCard({ wallet, onEdit, onClick }: WalletCardProps) {
-  const creditUsed = wallet.type === "credit" && wallet.creditLimit
-    ? Math.round((Math.abs(wallet.balance) / wallet.creditLimit) * 100)
+export function WalletCard({ wallet, onEdit, onClick, currentDate, transactions }: WalletCardProps) {
+  const isCredit = wallet.type === "credit";
+  const isDebt = isCredit || wallet.type === "loan";
+  const debtAmount = isDebt ? Math.max(-wallet.balance, 0) : 0;
+  const debtBalanceInFavor = isDebt ? Math.max(wallet.balance, 0) : 0;
+  const creditAvailable = isCredit && wallet.creditLimit
+    ? Math.max(wallet.creditLimit - debtAmount + debtBalanceInFavor, 0)
     : 0;
+  const creditUsed = isCredit && wallet.creditLimit
+    ? Math.min(Math.round((debtAmount / wallet.creditLimit) * 100), 100)
+    : 0;
+  const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const nextMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  const paidThisMonth = isDebt
+    ? transactions
+        .filter((transaction) => {
+          if (transaction.type !== "transfer" || transaction.transferToWalletId !== wallet.id) {
+            return false;
+          }
+
+          const transactionDate = new Date(transaction.date);
+          return transactionDate >= monthStart && transactionDate < nextMonthStart;
+        })
+        .reduce((sum, transaction) => sum + transaction.amount, 0)
+    : 0;
+  const monthlyTarget = wallet.monthlyPayment || 0;
+  const payableThisMonth = paidThisMonth + debtAmount;
+  const effectivePaymentTarget = monthlyTarget > 0
+    ? Math.min(monthlyTarget, payableThisMonth)
+    : 0;
+  const remainingPayment = Math.max(effectivePaymentTarget - paidThisMonth, 0);
+  const paymentProgress = effectivePaymentTarget > 0
+    ? Math.min(Math.round((paidThisMonth / effectivePaymentTarget) * 100), 100)
+    : paidThisMonth > 0 ? 100 : 0;
+  const hasPaymentDetails = isDebt && (wallet.monthlyPayment || wallet.paymentDueDay || paidThisMonth > 0);
 
   return (
     <Card
@@ -57,16 +90,40 @@ export function WalletCard({ wallet, onEdit, onClick }: WalletCardProps) {
           </button>
         </div>
 
-        <CurrencyDisplay
-          amount={wallet.balance}
-          currency={wallet.currency}
-          size="lg"
-          className="block mb-2"
-        />
+        {isDebt ? (
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">Deuda actual</p>
+            <CurrencyDisplay
+              amount={debtAmount}
+              currency={wallet.currency}
+              type={debtAmount > 0 ? "expense" : "neutral"}
+              size="lg"
+              className="block"
+            />
+            {debtBalanceInFavor > 0 && (
+              <p className="text-xs text-emerald-500">
+                Saldo a favor:{" "}
+                <CurrencyDisplay
+                  amount={debtBalanceInFavor}
+                  currency={wallet.currency}
+                  size="sm"
+                />
+              </p>
+            )}
+          </div>
+        ) : (
+          <CurrencyDisplay
+            amount={wallet.balance}
+            currency={wallet.currency}
+            showSign={wallet.balance < 0}
+            size="lg"
+            className={cn("block mb-2", wallet.balance < 0 && "text-expense")}
+          />
+        )}
 
         <p className="text-xs text-muted-foreground">{wallet.currency}</p>
 
-        {wallet.type === "credit" && wallet.creditLimit && (
+        {isCredit && wallet.creditLimit && (
           <div className="mt-3 space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{creditUsed}% utilizado</span>
@@ -79,6 +136,66 @@ export function WalletCard({ wallet, onEdit, onClick }: WalletCardProps) {
                 creditUsed > 80 ? "bg-red-500" : creditUsed > 50 ? "bg-amber-500" : "bg-primary"
               }
             />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Disponible</span>
+              <CurrencyDisplay amount={creditAvailable} currency={wallet.currency} size="sm" />
+            </div>
+          </div>
+        )}
+
+        {hasPaymentDetails && (
+          <div className="mt-3 space-y-2 rounded-lg bg-muted/50 p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-[10px] text-muted-foreground">Pago mensual</p>
+                {wallet.monthlyPayment ? (
+                  <CurrencyDisplay
+                    amount={wallet.monthlyPayment}
+                    currency={wallet.currency}
+                    size="sm"
+                    className="font-medium"
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">Sin dato</span>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">Límite de pago</p>
+                <p className="text-xs font-medium">
+                  {wallet.paymentDueDay ? `Día ${wallet.paymentDueDay}` : "Sin dato"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-2">
+              <div>
+                <p className="text-[10px] text-muted-foreground">Abonado este mes</p>
+                <CurrencyDisplay
+                  amount={paidThisMonth}
+                  currency={wallet.currency}
+                  size="sm"
+                  className="font-medium"
+                />
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">Falta por abonar</p>
+                <CurrencyDisplay
+                  amount={remainingPayment}
+                  currency={wallet.currency}
+                  type={remainingPayment > 0 ? "expense" : "neutral"}
+                  size="sm"
+                  className="font-medium"
+                />
+              </div>
+            </div>
+
+            {effectivePaymentTarget > 0 && (
+              <Progress
+                value={paymentProgress}
+                className="h-1.5"
+                indicatorClassName={paymentProgress >= 100 ? "bg-emerald-500" : "bg-primary"}
+              />
+            )}
           </div>
         )}
       </CardContent>
