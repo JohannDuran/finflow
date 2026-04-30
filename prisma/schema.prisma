@@ -36,10 +36,12 @@ model Wallet {
   id          String   @id @default(uuid())
   userId      String
   name        String
-  type        String // 'cash' | 'bank' | 'credit' | 'ewallet' | 'crypto'
+  type        String // 'cash' | 'bank' | 'credit' | 'loan' | 'ewallet' | 'crypto' | 'investment'
   currency    String
   balance     Float    @default(0)
   creditLimit Float?
+  monthlyPayment Float?
+  paymentDueDay Int?
   icon        String
   color       String
   isArchived  Boolean  @default(false)

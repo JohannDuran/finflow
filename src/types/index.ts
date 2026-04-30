@@ -1,7 +1,7 @@
 // FinFlow — Type Definitions
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
-export type WalletType = 'cash' | 'bank' | 'credit' | 'ewallet' | 'crypto';
+export type WalletType = 'cash' | 'bank' | 'credit' | 'loan' | 'ewallet' | 'crypto' | 'investment';
 export type BudgetPeriod = 'weekly' | 'biweekly' | 'monthly' | 'yearly';
 export type Currency = 'USD' | 'MXN' | 'EUR' | 'COP' | 'ARS' | 'BRL' | 'PEN' | 'CLP';
 
@@ -23,7 +23,9 @@ export interface Wallet {
   type: WalletType;
   currency: Currency;
   balance: number;
-  creditLimit?: number;
+  creditLimit?: number | null;
+  monthlyPayment?: number | null;
+  paymentDueDay?: number | null;
   icon: string;
   color: string;
   isArchived: boolean;
@@ -160,4 +162,3 @@ export interface Subscription {
   notes?: string;
   createdAt: Date;
 }
-
