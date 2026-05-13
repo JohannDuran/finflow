@@ -6,15 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { formatRelativeDate } from "@/lib/utils";
 import type { Transaction, Category, Wallet } from "@/types";
 import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 
 interface TransactionItemProps {
   transaction: Transaction;
   category?: Category;
   wallet?: Wallet;
+  transferToWallet?: Wallet;
   onClick?: () => void;
 }
 
-export function TransactionItem({ transaction, category, wallet, onClick }: TransactionItemProps) {
+export function TransactionItem({ transaction, category, wallet, transferToWallet, onClick }: TransactionItemProps) {
   return (
     <button
       onClick={onClick}
@@ -40,12 +42,29 @@ export function TransactionItem({ transaction, category, wallet, onClick }: Tran
         <p className="text-sm font-medium truncate">{transaction.description}</p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           <span className="text-xs text-muted-foreground">{category?.name || "Sin categoría"}</span>
-          {wallet && (
+          {transaction.type === "transfer" && wallet ? (
+            <>
+              <span className="text-xs text-muted-foreground">·</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: wallet.color }} />
+                {wallet.name}
+                <ArrowRight className="w-3 h-3 text-transfer" />
+                {transferToWallet ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: transferToWallet.color }} />
+                    {transferToWallet.name}
+                  </>
+                ) : (
+                  "?"
+                )}
+              </span>
+            </>
+          ) : wallet ? (
             <>
               <span className="text-xs text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground">{wallet.name}</span>
             </>
-          )}
+          ) : null}
           {transaction.tags && transaction.tags.length > 0 && (
             <>
               <span className="text-xs text-muted-foreground">·</span>

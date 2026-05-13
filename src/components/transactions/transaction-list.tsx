@@ -71,6 +71,7 @@ export function TransactionList({ transactions, categories, wallets }: Transacti
                 transaction={tx}
                 category={categories.find((c) => c.id === tx.categoryId)}
                 wallet={wallets.find((w) => w.id === tx.walletId)}
+                transferToWallet={tx.type === "transfer" ? wallets.find((w) => w.id === tx.transferToWalletId) : undefined}
                 onClick={() => handleEdit(tx)}
               />
             ))}

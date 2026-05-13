@@ -401,9 +401,12 @@ export function TransactionFormModal() {
               <SelectContent>
                 {activeWallets.map((w) => (
                   <SelectItem key={w.id} value={w.id}>
-                    <span className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: w.color }} />
-                      {w.name}
+                    <span className="flex items-center gap-2 w-full">
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: w.color }} />
+                      <span className="truncate">{w.name}</span>
+                      <span className={cn("ml-auto text-xs font-semibold tabular-nums", w.balance >= 0 ? "text-green-500" : "text-red-500")}>
+                        {formatCurrency(w.balance, w.currency)}
+                      </span>
                     </span>
                   </SelectItem>
                 ))}
@@ -422,9 +425,12 @@ export function TransactionFormModal() {
                 <SelectContent>
                   {activeWallets.filter((w) => w.id !== walletId).map((w) => (
                     <SelectItem key={w.id} value={w.id}>
-                      <span className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: w.color }} />
-                        {w.name}
+                      <span className="flex items-center gap-2 w-full">
+                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: w.color }} />
+                        <span className="truncate">{w.name}</span>
+                        <span className={cn("ml-auto text-xs font-semibold tabular-nums", w.balance >= 0 ? "text-green-500" : "text-red-500")}>
+                          {formatCurrency(w.balance, w.currency)}
+                        </span>
                       </span>
                     </SelectItem>
                   ))}
