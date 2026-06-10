@@ -63,6 +63,7 @@ export function SubscriptionFormModal() {
     updateSubscription,
     deleteSubscription,
     categories,
+    wallets,
     user 
   } = useFinFlowStore();
 
@@ -82,6 +83,8 @@ export function SubscriptionFormModal() {
   const [icon, setIcon] = useState("CreditCard");
   const [color, setColor] = useState("#EF4444");
   const [platformId, setPlatformId] = useState<string | undefined>(undefined);
+  const [isDomiciliado, setIsDomiciliado] = useState(false);
+  const [walletId, setWalletId] = useState<string | undefined>(undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Consider only expenses categories for subscriptions
@@ -100,6 +103,8 @@ export function SubscriptionFormModal() {
     setIcon("CreditCard");
     setColor("#EF4444");
     setPlatformId(undefined);
+    setIsDomiciliado(false);
+    setWalletId(undefined);
   }, []);
 
   useEffect(() => {
@@ -115,6 +120,8 @@ export function SubscriptionFormModal() {
       setIcon(editSub.icon);
       setColor(editSub.color);
       setPlatformId(editSub.platformId ?? undefined);
+      setIsDomiciliado(editSub.isDomiciliado ?? false);
+      setWalletId(editSub.walletId ?? undefined);
     } else {
       resetForm();
     }
@@ -189,6 +196,8 @@ export function SubscriptionFormModal() {
       platformId,
       color,
       isActive,
+      isDomiciliado,
+      walletId: isDomiciliado ? walletId : undefined,
       notes: notes.trim() || undefined,
     };
 
@@ -357,6 +366,37 @@ export function SubscriptionFormModal() {
               onChange={(e) => setNotes(e.target.value)}
               className="mt-1 resize-none h-16"
             />
+          </div>
+
+          {/* Domiciliado (Auto-debit) */}
+          <div className="space-y-3 p-3 bg-muted/50 rounded-xl border border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Domiciliado</Label>
+                <p className="text-xs text-muted-foreground leading-tight">Se carga automáticamente a una cuenta</p>
+              </div>
+              <Switch checked={isDomiciliado} onCheckedChange={(checked) => {
+                setIsDomiciliado(checked);
+                if (!checked) setWalletId(undefined);
+              }} />
+            </div>
+            {isDomiciliado && (
+              <div>
+                <Label>Cuenta de cargo</Label>
+                <Select value={walletId || ""} onValueChange={(v) => setWalletId(v || undefined)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecciona una wallet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {wallets.filter((w) => !w.isArchived).map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.name} ({w.currency})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Status */}

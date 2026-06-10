@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFinFlowStore } from "@/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,28 @@ import {
   Repeat,
   DollarSign,
   CalendarDays,
+  ArrowUpDown,
+  ArrowUpNarrowWide,
+  ArrowDownNarrowWide,
 } from "lucide-react";
 import { SubscriptionFormModal } from "@/components/subscriptions/subscription-form";
 import { PlatformLogo } from "@/components/shared/platform-logo";
+import { updateSubscriptionAction } from "@/app/actions/subscription.actions";
 
 const cycleLabels: Record<string, string> = {
   weekly: "Semanal",
   monthly: "Mensual",
   yearly: "Anual",
+};
+
+type SortField = "nextBillDate" | "amount" | "name" | "wallet";
+type SortDirection = "asc" | "desc";
+
+const sortLabels: Record<SortField, string> = {
+  nextBillDate: "Próximo cobro",
+  amount: "Monto",
+  name: "Nombre",
+  wallet: "Wallet",
 };
 
 type ExchangeRatesResponse = {
@@ -48,7 +62,7 @@ type ExchangeRateState = {
 };
 
 export default function SubscriptionsPage() {
-  const { subscriptions, categories, user, setActiveModal, setEditingItem } = useFinFlowStore();
+  const { subscriptions, categories, wallets, user, setActiveModal, setEditingItem, updateSubscription } = useFinFlowStore();
   const defaultCurrency = user?.defaultCurrency || "MXN";
   const [displayCurrency, setDisplayCurrency] = useState<Currency>(defaultCurrency);
   const [exchangeRateState, setExchangeRateState] = useState<ExchangeRateState>({
@@ -57,6 +71,43 @@ export default function SubscriptionsPage() {
     error: null,
   });
   const [now] = useState(() => Date.now());
+  const hasAdvanced = useRef(false);
+  const [sortField, setSortField] = useState<SortField>("nextBillDate");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+
+  // Auto-advance past-due subscriptions to the next billing date
+  useEffect(() => {
+    if (hasAdvanced.current || !user?.id) return;
+    hasAdvanced.current = true;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    subscriptions.forEach((sub) => {
+      if (!sub.isActive || !sub.nextBillDate) return;
+
+      const billDate = new Date(sub.nextBillDate);
+      billDate.setHours(0, 0, 0, 0);
+
+      if (billDate >= today) return;
+
+      // Advance to the next future date based on billing cycle
+      let next = new Date(billDate);
+      while (next < today) {
+        if (sub.billingCycle === "weekly") {
+          next.setDate(next.getDate() + 7);
+        } else if (sub.billingCycle === "monthly") {
+          next.setMonth(next.getMonth() + 1);
+        } else if (sub.billingCycle === "yearly") {
+          next.setFullYear(next.getFullYear() + 1);
+        }
+      }
+
+      const newDate = next.toISOString();
+      updateSubscription(sub.id, { nextBillDate: newDate });
+      updateSubscriptionAction(user.id, sub.id, { nextBillDate: newDate });
+    });
+  }, [subscriptions, user, updateSubscription]);
 
   const activeSubs = useMemo(
     () => subscriptions.filter((subscription) => subscription.isActive),
@@ -133,6 +184,27 @@ export default function SubscriptionsPage() {
     [displayCurrency, exchangeRateState.rates, exchangeRateState.target]
   );
 
+  const sortedSubs = useMemo(() => {
+    const dir = sortDirection === "asc" ? 1 : -1;
+    return [...activeSubs].sort((a, b) => {
+      switch (sortField) {
+        case "nextBillDate":
+          return dir * (new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime());
+        case "amount":
+          return dir * (convert(a.amount, a.currency) - convert(b.amount, b.currency));
+        case "name":
+          return dir * a.name.localeCompare(b.name, "es");
+        case "wallet": {
+          const walletA = wallets.find((w) => w.id === a.walletId)?.name ?? "";
+          const walletB = wallets.find((w) => w.id === b.walletId)?.name ?? "";
+          return dir * walletA.localeCompare(walletB, "es");
+        }
+        default:
+          return 0;
+      }
+    });
+  }, [activeSubs, sortField, sortDirection, wallets, convert]);
+
   const summary = useMemo(() => {
     const monthlyTotal = activeSubs.reduce((sum, s) => {
       let monthly = s.amount;
@@ -144,7 +216,7 @@ export default function SubscriptionsPage() {
     const yearlyTotal = monthlyTotal * 12;
 
     const nextBill = activeSubs
-      .filter((s) => s.nextBillDate)
+      .filter((s) => s.nextBillDate && new Date(s.nextBillDate).getTime() >= now)
       .sort((a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime())[0];
     const daysToNext = nextBill
       ? Math.ceil((new Date(nextBill.nextBillDate).getTime() - now) / (1000 * 60 * 60 * 24))
@@ -168,11 +240,18 @@ export default function SubscriptionsPage() {
     });
   }, [activeSubs, categories, convert]);
 
-  // Upcoming bills sorted by date
+  // Upcoming bills sorted by date (only future bills within the current month)
   const upcomingBills = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
     return [...activeSubs]
-      .sort((a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime())
-      .slice(0, 5);
+      .filter((s) => {
+        const billDate = new Date(s.nextBillDate);
+        return billDate >= today && billDate <= endOfMonth;
+      })
+      .sort((a, b) => new Date(a.nextBillDate).getTime() - new Date(b.nextBillDate).getTime());
   }, [activeSubs]);
 
   return (
@@ -291,14 +370,44 @@ export default function SubscriptionsPage() {
           ) : (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-display flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-primary" />
-                  Tus suscripciones
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-display flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-primary" />
+                    Tus suscripciones
+                  </CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Select value={sortField} onValueChange={(v) => setSortField(v as SortField)}>
+                      <SelectTrigger className="h-7 text-[11px] w-[130px] gap-1">
+                        <ArrowUpDown className="w-3 h-3" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(Object.entries(sortLabels) as [SortField, string][]).map(([key, label]) => (
+                          <SelectItem key={key} value={key} className="text-xs">
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setSortDirection((d) => (d === "asc" ? "desc" : "asc"))}
+                      title={sortDirection === "asc" ? "Ascendente" : "Descendente"}
+                    >
+                      {sortDirection === "asc" ? (
+                        <ArrowUpNarrowWide className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDownNarrowWide className="w-3.5 h-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-1">
-                  {activeSubs.map((sub, idx) => {
+                  {sortedSubs.map((sub, idx) => {
                     const daysUntil = Math.ceil(
                       (new Date(sub.nextBillDate).getTime() - now) / (1000 * 60 * 60 * 24)
                     );
@@ -327,6 +436,11 @@ export default function SubscriptionsPage() {
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                                 {cycleLabels[sub.billingCycle]}
                               </Badge>
+                              {sub.isDomiciliado && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
+                                  Domiciliado{sub.walletId && ` · ${wallets.find((w) => w.id === sub.walletId)?.name ?? ""}`}
+                                </Badge>
+                              )}
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 {daysUntil <= 7 ? (
@@ -351,7 +465,7 @@ export default function SubscriptionsPage() {
                             </p>
                           </div>
                         </div>
-                        {idx < activeSubs.length - 1 && <Separator />}
+                        {idx < sortedSubs.length - 1 && <Separator />}
                       </div>
                     );
                   })}

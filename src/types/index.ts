@@ -159,6 +159,8 @@ export interface Subscription {
   platformId?: string;
   color: string;
   isActive: boolean;
+  isDomiciliado: boolean;
+  walletId?: string;
   notes?: string;
   createdAt: Date;
 }
